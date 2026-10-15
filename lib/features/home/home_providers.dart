@@ -27,6 +27,12 @@ final personalMixProvider = FutureProvider<
   return ref.watch(feedRepositoryProvider).fetchPersonalMix();
 });
 
+/// Artist-anchored, personalised Daily Mix shelves. This provider loads
+/// independently so a slow recommendation source cannot block the home feed.
+final dailyMixesProvider = FutureProvider<List<DailyMix>>((ref) {
+  return ref.watch(feedRepositoryProvider).fetchDailyMixes();
+});
+
 /// One friend's latest scrobble for the Friends Listening strip.
 class FriendActivity {
   final String friend;
