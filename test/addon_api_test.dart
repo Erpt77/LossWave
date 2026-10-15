@@ -604,6 +604,7 @@ void main() {
     test('one mint blip recovers without falling through', () async {
       if (AppEnv.addonClientSecret.isEmpty) {
         markTestSkipped('addon secret not configured in this env');
+        return;
       }
       final token = _hex('f');
       final dio = Dio();
@@ -630,6 +631,7 @@ void main() {
     test('quota 429 throws immediately (no pointless retry)', () async {
       if (AppEnv.addonClientSecret.isEmpty) {
         markTestSkipped('addon secret not configured in this env');
+        return;
       }
       final token = _hex('f');
       final dio = Dio();
@@ -656,6 +658,7 @@ void main() {
       // than dropping to YouTube.
       if (AppEnv.addonClientSecret.isEmpty) {
         markTestSkipped('addon secret not configured in this env');
+        return;
       }
       final token = _hex('f');
       final dio = Dio();
@@ -692,6 +695,7 @@ void main() {
       // original) rather than play the remix in lossless.
       if (AppEnv.addonClientSecret.isEmpty) {
         markTestSkipped('addon secret not configured in this env');
+        return;
       }
       final token = _hex('f');
       final dio = Dio();
@@ -731,6 +735,7 @@ void main() {
       // and the faithful check must let it fetch.
       if (AppEnv.addonClientSecret.isEmpty) {
         markTestSkipped('addon secret not configured in this env');
+        return;
       }
       final token = _hex('f');
       final dio = Dio();
@@ -762,6 +767,7 @@ void main() {
       // server filtered hi_res-only entries out of desktop's pool.
       if (AppEnv.addonClientSecret.isEmpty) {
         markTestSkipped('addon secret not configured in this env');
+        return;
       }
       final token = _hex('f');
       final dio = Dio();
@@ -780,6 +786,7 @@ void main() {
     test('searchTracks defaults to lossless knob', () async {
       if (AppEnv.addonClientSecret.isEmpty) {
         markTestSkipped('addon secret not configured in this env');
+        return;
       }
       final token = _hex('f');
       final dio = Dio();
