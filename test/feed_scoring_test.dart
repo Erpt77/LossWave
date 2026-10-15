@@ -105,6 +105,7 @@ void main() {
           'arijit singh');
       expect(
           normalizeArtistKey('Drake (feat. Future)'), 'drake');
+      expect(normalizeArtistKey('Artist (FEAT. Guest)'), 'artist');
       expect(normalizeArtistKey('X ft. Y'), 'x');
       expect(
           normalizeArtistKey('A FEATURING B'), 'a');
