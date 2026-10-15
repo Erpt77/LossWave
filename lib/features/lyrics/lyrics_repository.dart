@@ -613,21 +613,24 @@ class LyricsRepository {
       if (!newMentions && curMentions) return false;
     }
 
-    // 5. Timed lyrics always beat static text: static lines can never
-    // highlight or follow, no matter how complete. Length/richness
-    // below only compare like with like.
-    if (newRes.isSynced && !current.isSynced) return true;
-    if (!newRes.isSynced && current.isSynced) return false;
-
-    // 6. Complete text beats a shorter cut of the same sync kind
+    // 5. Timed lyrics normally win because they can highlight and follow.
+    // However, a much more complete static transcript should beat a short
+    // timed excerpt (for example, full Apple Music lyrics vs a short LRCLIB cut).
     final newLen = lyricsBodyLength(newRes);
     final curLen = lyricsBodyLength(current);
-    if (newLen >= (curLen * 1.25).round() && newLen - curLen >= 120) {
-      return true;
+    final newMuchLonger =
+        newLen >= (curLen * 1.25).round() && newLen - curLen >= 120;
+    final currentMuchLonger =
+        curLen >= (newLen * 1.25).round() && curLen - newLen >= 120;
+    if (newRes.isSynced != current.isSynced) {
+      if (!newRes.isSynced && newMuchLonger) return true;
+      if (!current.isSynced && currentMuchLonger) return false;
+      return newRes.isSynced;
     }
-    if (curLen >= (newLen * 1.25).round() && curLen - newLen >= 120) {
-      return false;
-    }
+
+    // 6. Complete text beats a shorter cut when sync quality is equal.
+    if (newMuchLonger) return true;
+    if (currentMuchLonger) return false;
 
     // 7. Unique-line richness beats a padded loop with the same raw count
     final newUnique = lyricsUniqueLineCount(newRes);
