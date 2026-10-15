@@ -61,10 +61,10 @@ jobs:
       - name: Run analyzer & tests
         run: |
           flutter analyze --no-fatal-infos
-          # The full suite currently contains pre-existing live-network and
-          # unrelated regression failures. Keep the report visible, but don't
-          # block platform packaging on those failures.
-          flutter test || echo "::warning::Some existing tests failed; continuing to package desktop builds."
+          # innertube_live_test.dart explicitly requires live YouTube servers
+          # and is not part of the default suite. Run offline tests here;
+          # keep failures visible without blocking desktop packaging.
+          find test -name '*_test.dart' ! -name 'innertube_live_test.dart' -print0 | xargs -0 flutter test || echo "::warning::Some offline tests failed; continuing to package desktop builds."
 
       - name: Build Linux app
         run: flutter build linux --release
