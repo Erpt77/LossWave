@@ -622,9 +622,39 @@ class LyricsRepository {
         newLen >= (curLen * 1.25).round() && newLen - curLen >= 120;
     final currentMuchLonger =
         curLen >= (newLen * 1.25).round() && curLen - newLen >= 120;
+
+    // A long static transcript should replace a short timed excerpt only when
+    // both candidates appear to describe the same song text. Length alone can
+    // otherwise make unrelated lyrics win simply because they have more lines.
+    bool sharesLyricsText(LyricsResult a, LyricsResult b) {
+      String normalize(String value) => value
+          .toLowerCase()
+          .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+          .trim();
+      final aLines = a.lines
+          .map((line) => normalize(line.text))
+          .where((line) => line.length >= 8)
+          .toSet();
+      final bLines = b.lines
+          .map((line) => normalize(line.text))
+          .where((line) => line.length >= 8)
+          .toSet();
+      final smaller = aLines.length <= bLines.length ? aLines : bLines;
+      final larger = identical(smaller, aLines) ? bLines : aLines;
+      final matches = smaller.where(larger.contains).length;
+      return matches >= 2 ||
+          (smaller.isNotEmpty && matches / smaller.length >= 0.4);
+    }
+
     if (newRes.isSynced != current.isSynced) {
-      if (!newRes.isSynced && newMuchLonger) return true;
-      if (!current.isSynced && currentMuchLonger) return false;
+      if (!newRes.isSynced && newMuchLonger &&
+          sharesLyricsText(newRes, current)) {
+        return true;
+      }
+      if (!current.isSynced && currentMuchLonger &&
+          sharesLyricsText(current, newRes)) {
+        return false;
+      }
       return newRes.isSynced;
     }
 
