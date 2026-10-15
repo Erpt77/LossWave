@@ -76,7 +76,7 @@ jobs:
       - name: Build AppImage
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VERSION="${GITHUB_REF_NAME#v}"; else VERSION="$(sed -n 's/^version: *\\([0-9.]*\\).*/\\1/p' pubspec.yaml)"; fi
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VERSION="${GITHUB_REF_NAME#v}"; else VERSION="$(awk '$1 == "version:" {split($2, a, "+"); print a[1]}' pubspec.yaml)"; fi
           echo "Building AppImage for version $VERSION"
           TOOLS="$RUNNER_TEMP/appimage-tools"
           mkdir -p "$TOOLS" AppDir/usr/bin
@@ -256,7 +256,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         run: |
           go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VERSION="${GITHUB_REF_NAME#v}"; else VERSION="$(awk '/^version:/ {split($2,a,\"+\"); print a[1]}' pubspec.yaml)"; fi
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VERSION="${GITHUB_REF_NAME#v}"; else VERSION="$(awk '$1 == "version:" {split($2, a, "+"); print a[1]}' pubspec.yaml)"; fi
           export VERSION
           echo "Packaging version $VERSION"
           ~/go/bin/nfpm package --config linux/packaging/nfpm.yaml --packager deb --target ./lastwave_${VERSION}_amd64.deb
@@ -441,7 +441,7 @@ jobs:
 
       - name: Compress macOS Bundle
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VERSION="${GITHUB_REF_NAME#v}"; else VERSION="$(sed -n 's/^version: *\\([0-9.]*\\).*/\\1/p' pubspec.yaml)"; fi
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VERSION="${GITHUB_REF_NAME#v}"; else VERSION="$(awk '$1 == "version:" {split($2, a, "+"); print a[1]}' pubspec.yaml)"; fi
           ditto -c -k --keepParent "build/macos/Build/Products/Release/lastwave_desktop.app" "lastwave_${VERSION}_macos-arm64.zip"
 
       - name: Upload macOS Artifact
