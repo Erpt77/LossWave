@@ -641,7 +641,16 @@ class LyricsRepository {
           .toSet();
       final smaller = aLines.length <= bLines.length ? aLines : bLines;
       final larger = identical(smaller, aLines) ? bLines : aLines;
-      final matches = smaller.where(larger.contains).length;
+
+      // A complete transcript often appends extra verses/choruses to a line
+      // that also appears in a shorter timed excerpt. Exact set matching misses
+      // that overlap because the complete line is longer than the excerpt line.
+      final matches = smaller.where((line) {
+        return larger.any(
+          (other) =>
+              line == other || line.startsWith(other) || other.startsWith(line),
+        );
+      }).length;
       return matches >= 2 ||
           (smaller.isNotEmpty && matches / smaller.length >= 0.4);
     }
