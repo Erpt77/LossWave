@@ -168,7 +168,7 @@ String normalizeArtistKey(String artist) {
   // Parenthesised credits: "Artist (feat. X)", "[ft. X]", "(with X)"
   k = k
       .replaceAll(
-          RegExp(r'\s*[\(\[]\s*(feat\.?\vert{}ft\.?\vert{}featuring\vert{}with\vert{}prod\.?\vert{}produced by)\b[^\)\]]*[\)\]]'), '')
+          RegExp(r'\s*[\(\[]\s*(feat\.?|ft\.?|featuring|with|prod\.?|produced by)\b[^\)\]]*[\)\]]', caseSensitive: false), '')
       .trim();
 
   // Trailing collab & featured credits: "A feat. B", "A ft B", "A featuring B", "A with B", "A prod. B"
