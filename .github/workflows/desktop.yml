@@ -256,7 +256,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         run: |
           go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
-          export VERSION="${GITHUB_REF_NAME#v}"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VERSION="${GITHUB_REF_NAME#v}"; else VERSION="$(awk '/^version:/ {split($2,a,\"+\"); print a[1]}' pubspec.yaml)"; fi
+          export VERSION
           echo "Packaging version $VERSION"
           ~/go/bin/nfpm package --config linux/packaging/nfpm.yaml --packager deb --target ./lastwave_${VERSION}_amd64.deb
           ~/go/bin/nfpm package --config linux/packaging/nfpm.yaml --packager rpm --target ./lastwave_${VERSION}_x86_64.rpm
@@ -353,7 +354,7 @@ jobs:
 
   release:
     name: Publish GitHub Release
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: [build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
     steps:
