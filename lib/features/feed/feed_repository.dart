@@ -40,6 +40,19 @@ class GeneratedTrack {
   String get key => '${name.toLowerCase()}|${artist.toLowerCase()}';
 }
 
+/// A personalised, artist-anchored shelf on the LossWave home screen.
+class DailyMix {
+  final String title;
+  final String seedArtist;
+  final List<GeneratedTrack> tracks;
+
+  const DailyMix({
+    required this.title,
+    required this.seedArtist,
+    required this.tracks,
+  });
+}
+
 /// Why a feed came back empty. Recorded by [FeedRepository] (which
 /// knows which legs failed); the UI combines it with live connectivity
 /// + auth state, so a non-network cause never says "offline".
@@ -1342,6 +1355,173 @@ class FeedRepository {
     final picked =
         applyExclusions(_diversify(scored, limit: total, maxPerArtist: 2), excluded);
     return resolveVideos(picked, limit: total);
+  }
+
+  /// Build separate daily mixes from recent, weekly, long-term, and local
+  /// listening signals. Each mix is anchored to a different artist, uses
+  /// the same exclusion and diversification rules as the existing feed,
+  /// and degrades gracefully when one data source is unavailable.
+  Future<List<DailyMix>> fetchDailyMixes({
+    int mixCount = 5,
+    int tracksPerMix = 12,
+  }) async {
+    Future<List<HomeTrack>> safeHome(
+      Future<List<HomeTrack>> Function() load,
+    ) async {
+      try {
+        return await load().timeout(const Duration(seconds: 12));
+      } catch (_) {
+        return <HomeTrack>[];
+      }
+    }
+
+    final signals = await Future.wait<List<HomeTrack>>([
+      safeHome(() {
+        final fetch = fetchLfmRecent;
+        return fetch != null
+            ? fetch(30)
+            : _home.fetchRecentTracks(limit: 30);
+      }),
+      safeHome(() {
+        final fetch = fetchLfmTop;
+        return fetch != null
+            ? fetch('7day', 30)
+            : _home.fetchTopTracks(period: '7day', limit: 30);
+      }),
+      safeHome(() {
+        final fetch = fetchLfmTop;
+        return fetch != null
+            ? fetch('12month', 30)
+            : _home.fetchTopTracks(period: '12month', limit: 30);
+      }),
+    ]);
+
+    final recent = signals[0];
+    final weekly = signals[1];
+    final longTerm = signals[2];
+
+    LocalTaste local = const LocalTaste();
+    try {
+      final fetch = fetchLocalTaste;
+      if (fetch != null) {
+        local = await fetch().timeout(const Duration(seconds: 5)) ??
+            const LocalTaste();
+      }
+    } catch (_) {}
+
+    List<YouTubeMusicTrack> ytLiked = const [];
+    List<YouTubeMusicTrack> ytHistory = const [];
+    try {
+      ytLiked = await (fetchYtLiked?.call() ?? Future.value(
+        const <YouTubeMusicTrack>[],
+      )).timeout(const Duration(seconds: 8));
+    } catch (_) {}
+    try {
+      ytHistory = await (fetchYtHistory?.call() ?? Future.value(
+        const <YouTubeMusicTrack>[],
+      )).timeout(const Duration(seconds: 8));
+    } catch (_) {}
+
+    final excluded = _db?.loadExclusionKeys() ?? const <String>{};
+    bool isExcluded(String name, String artist) =>
+        excluded.contains(AppDatabase.exclusionKey(name, artist));
+
+    final candidates = <HomeTrack>[
+      ...recent,
+      ...weekly,
+      ...longTerm,
+      ...local.seedPool(limit: 30),
+    ];
+    final seenTracks = <String>{};
+    final unique = candidates.where((track) {
+      if (track.name.trim().isEmpty || track.artist.trim().isEmpty) {
+        return false;
+      }
+      if (isExcluded(track.name, track.artist)) return false;
+      final key = '${track.name.toLowerCase().trim()}|${track.artist.toLowerCase().trim()}';
+      return seenTracks.add(key);
+    }).toList();
+
+    // Rotate the seed order once per day, but keep it stable during that day.
+    unique.shuffle(Random(feedDaySeed(DateTime.now())));
+    final seenArtists = <String>{};
+    final seeds = unique.where((track) {
+      final artist = normalizeArtistKey(track.artist);
+      return artist.isNotEmpty && seenArtists.add(artist);
+    }).take(mixCount).toList();
+
+    if (seeds.isEmpty) return const <DailyMix>[];
+
+    final affinities = await _artistAffinities(
+      weekly,
+      recent,
+      longTerm: longTerm,
+      ytLiked: ytLiked,
+      ytHistory: ytHistory,
+      localLiked: local.likedTracks,
+      localPlays: local.recentPlays,
+      localDownloads: local.downloadedTracks,
+      lfmActive: weekly.isNotEmpty || recent.isNotEmpty,
+    );
+
+    final mixes = <DailyMix>[];
+    for (final seed in seeds) {
+      List<GeneratedTrack> similar;
+      try {
+        final fetch = fetchSimilar;
+        final request = fetch != null
+            ? fetch(seed.name, seed.artist, tracksPerMix * 3)
+            : _similarTracks(seed.name, seed.artist, limit: tracksPerMix * 3);
+        similar = await request.timeout(
+          const Duration(seconds: 12),
+          onTimeout: () => <GeneratedTrack>[],
+        );
+      } catch (_) {
+        similar = <GeneratedTrack>[];
+      }
+
+      final seenSimilar = <String>{};
+      final usable = similar.where((track) {
+        if (track.name.trim().isEmpty || track.artist.trim().isEmpty) {
+          return false;
+        }
+        if (isExcluded(track.name, track.artist)) return false;
+        return seenSimilar.add(track.key);
+      }).toList();
+
+      final scored = usable.map((track) => (
+            track: track,
+            score: _affinity(track.artist, affinities) * 30 +
+                _random.nextDouble() * 10,
+          )).toList();
+      final picked = applyExclusions(
+        _diversify(scored, limit: tracksPerMix, maxPerArtist: 2),
+        excluded,
+      );
+      if (picked.isEmpty) continue;
+
+      List<GeneratedTrack> playable;
+      try {
+        playable = await resolveVideos(
+          picked,
+          limit: tracksPerMix,
+        ).timeout(
+          const Duration(seconds: 35),
+          onTimeout: () => picked,
+        );
+      } catch (_) {
+        playable = picked;
+      }
+
+      if (playable.isNotEmpty) {
+        mixes.add(DailyMix(
+          title: 'Daily Mix ${mixes.length + 1}',
+          seedArtist: seed.artist,
+          tracks: playable,
+        ));
+      }
+    }
+    return mixes;
   }
 }
 
