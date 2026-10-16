@@ -13,6 +13,7 @@ import '../../app/window.dart';
 import '../../app/window_lifecycle.dart';
 import '../../core/audio/stream_models.dart';
 import '../../features/player/playback_service.dart';
+import '../../features/settings/theme_controller.dart';
 import '../../features/search/search_repository.dart';
 import '../mini_player/mini_player.dart';
 import '../components/infobar_host.dart';
@@ -522,14 +523,18 @@ class _WaveShellState extends ConsumerState<WaveShell> {
   @override
   Widget build(BuildContext context) {
     final dark = waveIsDark(context);
+    final layout = ref.watch(themeControllerProvider.select((t) => t.uiLayout));
+    final amoled = ref.watch(themeControllerProvider.select((t) => t.amoled));
     final width = MediaQuery.sizeOf(context).width;
     final active = waveActivePath(widget.location);
     final hasTrack = ref.watch(
       playbackServiceProvider.select((s) => s.current != null),
     );
-    // Responsive: rail collapses at canonical compact breakpoint (900),
-    // never a permanent right panel.
-    final collapsed = width < 900 ? true : !_railExpanded;
+    // Navigation layout is independent of color palettes.
+    // Compact collapses earlier; expanded keeps the rail open on desktop.
+    final collapsed = width < (layout == 'compact' ? 1100 : 900)
+        ? true
+        : layout == 'expanded' ? false : !_railExpanded;
     final routePath = waveRoutePath(widget.location);
     final isLyrics = routePath.startsWith('/lyrics');
     final isNowPlaying = routePath.startsWith('/now');
@@ -546,8 +551,9 @@ class _WaveShellState extends ConsumerState<WaveShell> {
     // wave_hotkeys.dart), which runs before focus dispatch and works from
     // anywhere. Enter is deliberately left to focused controls.
     return Mica(
-          backgroundColor:
-              dark ? WaveColors.background : WaveColors.lightBackground,
+          backgroundColor: dark
+              ? (amoled ? const Color(0xFF000000) : WaveColors.background)
+              : WaveColors.lightBackground,
           child: Column(
             children: [
               _titleBarFor(

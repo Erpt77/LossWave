@@ -558,79 +558,92 @@ class _Appearance extends ConsumerWidget {
     return Column(
       children: [
         _Group(
-          title: 'Theme',
-          subtitle: 'Midnight charcoal or pearl light',
+          title: 'Color palettes',
+          subtitle: 'Change accent colors independently from the app layout and color scheme',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  Expanded(
-                    child: ToggleButton(
-                      checked: !theme.isLight,
-                      onChanged: (_) async {
-                        await ref
-                            .read(themeControllerProvider.notifier)
-                            .setThemeMode(false);
-                        await applyWindowMaterial(isLight: false);
+                  for (final preset in noctuneThemePresets)
+                    _ThemePresetTile(
+                      name: preset.name,
+                      accent: preset.accent,
+                      light: theme.isLight,
+                      selected: theme.presetId == preset.id,
+                      onTap: () async {
+                        await ref.read(themeControllerProvider.notifier).applyPreset(preset);
+                        await applyWindowMaterial(isLight: theme.isLight);
                       },
-                      child: const Text('Midnight'),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ToggleButton(
-                      checked: theme.isLight,
-                      onChanged: (_) async {
-                        await ref
-                            .read(themeControllerProvider.notifier)
-                            .setThemeMode(true);
-                        await applyWindowMaterial(isLight: true);
+                  for (final custom in theme.customThemes)
+                    _ThemePresetTile(
+                      name: custom['name']?.toString() ?? 'My theme',
+                      accent: Color((custom['accent'] as num?)?.toInt() ?? 0xFF1DB954),
+                      light: theme.isLight,
+                      selected: theme.presetId == custom['id'],
+                      onTap: () async {
+                        await ref.read(themeControllerProvider.notifier).applyCustomTheme(custom);
+                        await applyWindowMaterial(isLight: theme.isLight);
                       },
-                      child: const Text('Pearl'),
                     ),
-                  ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
+              Button(
+                onPressed: () async {
+                  final result = await _showCustomThemeDialog(context);
+                  if (result == null) return;
+                  await ref.read(themeControllerProvider.notifier).saveCustomTheme(
+                    name: result['name'] as String,
+                    accent: Color(result['accent'] as int),
+                    isLight: theme.isLight,
+                  );
+                  await applyWindowMaterial(isLight: theme.isLight);
+                },
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(FluentIcons.add, size: 14),
+                    SizedBox(width: 8),
+                    Text('Create your own theme'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
               const Text('Accent source', style: WaveType.trackTitle),
               const SizedBox(height: 6),
               ComboBox<String>(
                 value: theme.accentSource,
                 items: const [
                   ComboBoxItem(value: 'custom', child: Text('Custom colour')),
-                  ComboBoxItem(
-                    value: 'lastwave',
-                    child: Text('LastWave neutral'),
-                  ),
+                  ComboBoxItem(value: 'lastwave', child: Text('Noctune neutral')),
                   ComboBoxItem(value: 'system', child: Text('System accent')),
                   ComboBoxItem(value: 'artwork', child: Text('Artwork tint')),
                 ],
                 onChanged: (v) {
-                  if (v != null) {
-                    onUpdate((p) => p.setAccentSource(v));
-                  }
+                  if (v != null) onUpdate((p) => p.setAccentSource(v));
                 },
               ),
               const SizedBox(height: 10),
-              const Text('Accent colour', style: WaveType.trackTitle),
+              const Text('Quick accent', style: WaveType.trackTitle),
               const SizedBox(height: 6),
               Wrap(
                 spacing: 8,
                 children: [
                   for (final c in [
+                    const Color(0xFF1DB954),
                     const Color(0xFFF5F4F0),
                     const Color(0xFF4CC2FF),
-                    const Color(0xFFE03030),
-                    const Color(0xFF7C4DFF),
-                    const Color(0xFF2196C6),
-                    const Color(0xFF6B9E6B),
-                    const Color(0xFFE0A030),
-                    const Color(0xFFE0507A),
+                    const Color(0xFF9B87F5),
+                    const Color(0xFFE879A9),
+                    const Color(0xFFFFB454),
+                    const Color(0xFF45B7D1),
                   ])
                     GestureDetector(
-                      onTap: () =>
-                          onUpdate((p) => p.setAccentColor(c.toARGB32())),
+                      onTap: () => onUpdate((p) => p.setAccentColor(c.toARGB32())),
                       child: Container(
                         width: 28,
                         height: 28,
@@ -645,17 +658,55 @@ class _Appearance extends ConsumerWidget {
                           ),
                         ),
                         child: theme.accent.toARGB32() == c.toARGB32()
-                            ? Icon(
-                                FluentIcons.check_mark,
-                                size: 14,
-                                color: c.computeLuminance() > 0.5
-                                    ? Colors.black
-                                    : Colors.white,
-                              )
+                            ? Icon(FluentIcons.check_mark, size: 14,
+                                color: c.computeLuminance() > 0.5 ? Colors.black : Colors.white)
                             : null,
                       ),
                     ),
                 ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        _Group(
+          title: 'Color scheme',
+          subtitle: 'Light or dark surfaces are independent of the selected color palette',
+          child: ComboBox<String>(
+            value: theme.isLight ? 'light' : 'dark',
+            items: const [
+              ComboBoxItem(value: 'dark', child: Text('Dark')),
+              ComboBoxItem(value: 'light', child: Text('Light')),
+            ],
+            onChanged: (v) async {
+              if (v == null) return;
+              await ref.read(themeControllerProvider.notifier).setThemeMode(v == 'light');
+              await applyWindowMaterial(isLight: v == 'light');
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+        _Group(
+          title: 'UI layout',
+          subtitle: 'Change navigation layout without changing your colors',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ComboBox<String>(
+                value: theme.uiLayout,
+                items: const [
+                  ComboBoxItem(value: 'standard', child: Text('Standard · responsive navigation')),
+                  ComboBoxItem(value: 'compact', child: Text('Compact · collapse navigation sooner')),
+                  ComboBoxItem(value: 'expanded', child: Text('Expanded · keep navigation open')),
+                ],
+                onChanged: (v) {
+                  if (v != null) onUpdate((p) => p.setUiLayout(v));
+                },
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'This setting only changes the app layout. Any color palette can be used with any layout.',
+                style: WaveType.meta.copyWith(color: waveTextSecondary(context)),
               ),
             ],
           ),
@@ -726,6 +777,124 @@ class _Appearance extends ConsumerWidget {
       ],
     );
   }
+}
+
+
+class _ThemePresetTile extends StatelessWidget {
+  final String name;
+  final Color accent;
+  final bool light;
+  final bool selected;
+  final VoidCallback onTap;
+  const _ThemePresetTile({required this.name, required this.accent, required this.light, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = light ? const Color(0xFFF4F4F4) : const Color(0xFF171717);
+    final surface = light ? const Color(0xFFFFFFFF) : const Color(0xFF292929);
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        width: 142,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: selected ? accent : waveDivider(context), width: selected ? 2 : 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 44,
+              decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(5)),
+              child: Row(children: [
+                Container(width: 5, decoration: BoxDecoration(color: accent, borderRadius: const BorderRadius.horizontal(left: Radius.circular(5)))),
+                const SizedBox(width: 8),
+                Expanded(child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(height: 5, width: 54, decoration: BoxDecoration(color: const Color(0xFF777777), borderRadius: BorderRadius.circular(3))),
+                    const SizedBox(height: 5),
+                    Container(height: 4, width: 78, decoration: BoxDecoration(color: accent.withValues(alpha: 0.75), borderRadius: BorderRadius.circular(3))),
+                  ],
+                )),
+                if (selected) Padding(padding: const EdgeInsets.only(right: 7), child: Icon(FluentIcons.check_mark, size: 13, color: accent)),
+              ]),
+            ),
+            const SizedBox(height: 8),
+            Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: WaveType.trackTitle.copyWith(fontSize: 12)),
+            const SizedBox(height: 4),
+            Row(children: [
+              Container(width: 9, height: 9, decoration: BoxDecoration(color: accent, shape: BoxShape.circle)),
+              const SizedBox(width: 5),
+              Text(light ? 'Light' : 'Dark', style: WaveType.meta),
+            ]),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+Future<Map<String, dynamic>?> _showCustomThemeDialog(BuildContext context) {
+  final nameController = TextEditingController(text: 'My Noctune');
+  const colors = <Color>[
+    Color(0xFF1DB954), Color(0xFF9B87F5), Color(0xFFE879A9),
+    Color(0xFF45B7D1), Color(0xFFFFB454), Color(0xFFF5F4F0),
+    Color(0xFFE05050), Color(0xFF7BB6FF), Color(0xFFB8D86A),
+    Color(0xFFEF8354), Color(0xFF00BFA6), Color(0xFFDA70D6),
+  ];
+  Color selected = colors.first;
+  return showDialog<Map<String, dynamic>>(
+    context: context,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (context, setDialogState) => ContentDialog(
+        title: const Text('Create your own theme'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Theme name'),
+            const SizedBox(height: 6),
+            TextBox(controller: nameController, placeholder: 'e.g. Forest Night'),
+            const SizedBox(height: 14),
+            const Text('Accent colour'),
+            const SizedBox(height: 8),
+            Wrap(spacing: 9, runSpacing: 9, children: [
+              for (final color in colors)
+                GestureDetector(
+                  onTap: () => setDialogState(() => selected = color),
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: selected == color ? waveAccent(context) : Colors.transparent, width: 3),
+                    ),
+                    child: selected == color ? const Icon(FluentIcons.check_mark, size: 14, color: Colors.white) : null,
+                  ),
+                ),
+            ]),
+          ],
+        ),
+        actions: [
+          Button(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
+          Button(
+            onPressed: () {
+              final name = nameController.text.trim();
+              if (name.isEmpty) return;
+              Navigator.of(dialogContext).pop({'name': name, 'accent': selected.toARGB32()});
+            },
+            child: const Text('Save theme'),
+          ),
+        ],
+      ),
+    ),
+  ).whenComplete(nameController.dispose);
 }
 
 class _Lyrics extends ConsumerWidget {

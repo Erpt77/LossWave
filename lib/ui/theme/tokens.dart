@@ -19,18 +19,18 @@ class WaveColors {
   WaveColors._();
 
   // Neutral base — true graphite, zero blue.
-  static const background = Color(0xFF0E0E0E);
-  static const backgroundDeep = Color(0xFF0A0A0A);
-  static const surface = Color(0xFF161616);
-  static const surfaceRaised = Color(0xFF1E1E1E);
-  static const surfaceOverlay = Color(0xFF262626);
+  static const background = Color(0xFF121212);
+  static const backgroundDeep = Color(0xFF101010);
+  static const surface = Color(0xFF1E1E1E);
+  static const surfaceRaised = Color(0xFF2A2A2A);
+  static const surfaceOverlay = Color(0xFF303030);
 
   // Translucent shells painted over Mica.
-  static const panelTranslucent = Color(0xE6161616);
-  static const dockTranslucent = Color(0xF2141414);
-  static const railTranslucent = Color(0xE60E0E0E);
+  static const panelTranslucent = Color(0xE61E1E1E);
+  static const dockTranslucent = Color(0xF21A1A1A);
+  static const railTranslucent = Color(0xE6121212);
 
-  static const outline = Color(0xFF2B2B2B);
+  static const outline = Color(0xFF333333);
   static const outlineSoft = Color(0xFF1F1F1F);
 
   /// Soft hairline / wash surface (#1F1F1F). Alias of [outlineSoft].
@@ -42,7 +42,7 @@ class WaveColors {
 
   // Neutral accent — off-white. Play / progress / selected use this
   // by default; artwork tint may override sparingly at runtime.
-  static const defaultAccent = Color(0xFFF5F4F0);
+  static const defaultAccent = Color(0xFF1DB954);
   static const accentDim = Color(0xFF3A3A38);
   static const success = Color(0xFF7BE3A8);
   static const warn = Color(0xFFE0A030);

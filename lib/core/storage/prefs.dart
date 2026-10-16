@@ -164,8 +164,21 @@ class Prefs {
       _sp.setString('lw_lyrics_animation', v);
 
   // -- Appearance ------------------------------------------------------------
-  bool get amoled => _sp.getBool('lw_amoled') ?? false;
+  bool get amoled => _sp.getBool('lw_amoled') ?? true;
   Future<void> setAmoled(bool v) => _sp.setBool('lw_amoled', v);
+
+  /// Independent shell layout preset: standard | compact | expanded.
+  String get uiLayout {
+    final value = _sp.getString('noctune_ui_layout') ?? 'standard';
+    return const ['standard', 'compact', 'expanded'].contains(value)
+        ? value
+        : 'standard';
+  }
+  Future<void> setUiLayout(String value) =>
+      _sp.setString('noctune_ui_layout',
+          const ['standard', 'compact', 'expanded'].contains(value)
+              ? value
+              : 'standard');
 
   /// 'dark' (midnight observatory) or 'light' (pearl white).
   String get themeMode => _sp.getString('lw_theme_mode') ?? 'dark';
@@ -175,8 +188,24 @@ class Prefs {
   String get accentMode => _sp.getString('lw_accent_mode') ?? 'manual';
   Future<void> setAccentMode(String v) => _sp.setString('lw_accent_mode', v);
 
-  int get accentColor => _sp.getInt('lw_accent') ?? 0xFFE03030;
+  int get accentColor => _sp.getInt('lw_accent') ?? 0xFF1DB954;
   Future<void> setAccentColor(int v) => _sp.setInt('lw_accent', v);
+
+  String get themePreset => _sp.getString('noctune_theme_preset') ?? 'limusic-green';
+  Future<void> setThemePreset(String v) => _sp.setString('noctune_theme_preset', v);
+
+  List<Map<String, dynamic>> get customThemes {
+    try {
+      final raw = jsonDecode(_sp.getString('noctune_custom_themes') ?? '[]');
+      if (raw is List) {
+        return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      }
+    } catch (_) {}
+    return const [];
+  }
+
+  Future<void> setCustomThemes(List<Map<String, dynamic>> themes) =>
+      _sp.setString('noctune_custom_themes', jsonEncode(themes));
 
   bool get dynamicNowPlaying => _sp.getBool('lw_dynamic_now_playing') ?? false;
   Future<void> setDynamicNowPlaying(bool v) =>
