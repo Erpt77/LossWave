@@ -1,4 +1,5 @@
-import 'package:file_picker/file_picker.dart';
+import 'package:file_picker/file_picker.dart' as file_picker;
+import 'package:path/path.dart' as p;
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -152,9 +153,58 @@ class _LocationRow extends ConsumerStatefulWidget {
 }
 
 class _LocationRowState extends ConsumerState<_LocationRow> {
+  Future<void> _openAudioFiles() async {
+    try {
+      final files = await file_picker.FilePicker.pickFiles(
+        dialogTitle: 'Open audio files',
+        type: file_picker.FileType.custom,
+        allowedExtensions: const [
+          'flac', 'wav', 'mp3', 'm4a', 'aac', 'ogg', 'opus', 'aiff', 'ape',
+        ],
+        allowMultiple: true,
+        withData: false,
+      );
+      if (files.isEmpty || !mounted) return;
+      final tracks = files
+          .where((file) => file.path != null && file.path!.isNotEmpty)
+          .map((file) {
+            final path = file.path!;
+            final extension = p.extension(path).replaceFirst('.', '').toLowerCase();
+            final folder = p.basename(p.dirname(path));
+            return PlayableTrack(
+              title: p.basenameWithoutExtension(path),
+              artist: folder.isEmpty ? 'Local file' : folder,
+              album: folder,
+              playbackUrl: path,
+              playbackMimeType: switch (extension) {
+                'flac' => 'audio/flac',
+                'wav' => 'audio/wav',
+                'mp3' => 'audio/mpeg',
+                'm4a' || 'aac' => 'audio/mp4',
+                'ogg' || 'opus' => 'audio/ogg',
+                'aiff' => 'audio/aiff',
+                'ape' => 'audio/ape',
+                _ => '',
+              },
+            );
+          })
+          .toList();
+      if (tracks.isEmpty) return;
+      await ref.read(playbackServiceProvider.notifier).playQueue(
+            tracks,
+            0,
+            sourceLabel: 'Local files',
+            endlessRadio: false,
+          );
+    } catch (_) {
+      // File dialogs are platform-specific; leave the existing queue
+      // untouched if the picker is cancelled or unavailable.
+    }
+  }
+
   Future<void> _pick() async {
     try {
-      final path = await FilePicker.getDirectoryPath(
+      final path = await file_picker.FilePicker.getDirectoryPath(
         dialogTitle: 'Choose download folder',
       );
       if (path == null || path.trim().isEmpty) return;
@@ -187,6 +237,11 @@ class _LocationRowState extends ConsumerState<_LocationRow> {
             ),
           ),
         ),
+        Button(
+          onPressed: _openAudioFiles,
+          child: const Text('Open audio files'),
+        ),
+        const SizedBox(width: 8),
         Button(
           onPressed: _pick,
           child: const Text('Change folder'),

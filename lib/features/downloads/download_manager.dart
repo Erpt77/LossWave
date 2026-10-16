@@ -76,7 +76,7 @@ class DownloadEntry {
 /// fallback, embedded metadata (title/artist/album/lyrics/cover —
 /// `.opus` via WebM remux, FLAC/MP3/M4A tagged in place), `.lrc`
 /// sidecar lyrics, SQLite registry, files under the custom download
-/// folder when set, else `Music/LastWave` (or app documents when
+/// folder when set, else `Music/Noctune` (or app documents when
 /// Music is unavailable).
 class DownloadManager extends StateNotifier<List<DownloadEntry>> {
   final Dio _dio;
@@ -175,7 +175,7 @@ class DownloadManager extends StateNotifier<List<DownloadEntry>> {
     }
     try {
       final music = await getDownloadsDirectory();
-      // Prefer ~/Music/LastWave when available.
+      // Prefer ~/Music/Noctune when available.
       if (music != null) {
         final parent = Directory(music.path).parent;
         final candidates = [
@@ -191,7 +191,7 @@ class DownloadManager extends StateNotifier<List<DownloadEntry>> {
       }
     } catch (_) {}
     final docs = await getApplicationDocumentsDirectory();
-    final dir = Directory(p.join(docs.path, 'LastWave'));
+    final dir = Directory(p.join(docs.path, 'Noctune'));
     await dir.create(recursive: true);
     return dir;
   }
@@ -332,6 +332,11 @@ class DownloadManager extends StateNotifier<List<DownloadEntry>> {
           badge = stream.qualityBadge;
         }
       }
+      if (stream == null && _prefs.flacOnlyDownloads) {
+        throw Exception(
+          'FLAC-only downloads need a configured lossless source that provides FLAC for this track.',
+        );
+      }
       if (stream == null) {
         final match = await _tube.findBestMatchOrNull(title, artist);
         if (match == null) {
@@ -350,6 +355,19 @@ class DownloadManager extends StateNotifier<List<DownloadEntry>> {
       final audioBytes =
           await _fetchAudioBytes(stream, key, title, artist, badge);
       if (audioBytes.isEmpty) throw Exception('Empty audio payload');
+      if (_prefs.flacOnlyDownloads) {
+        final container = MediaTagger.detectContainer(audioBytes);
+        final isFlac = container == 'flac' ||
+            (container == 'mp4' && MediaTagger.isFlacInMp4(audioBytes));
+        if (!isFlac) {
+          final received = container == 'unknown'
+              ? 'an unsupported audio format'
+              : container.toUpperCase();
+          throw Exception(
+            'FLAC-only is enabled, but the source returned $received instead of FLAC.',
+          );
+        }
+      }
 
       // Lyrics + cover in parallel: sidecar text, embeddable plain
       // text, and cover bytes for the container tag.
@@ -464,6 +482,11 @@ class DownloadManager extends StateNotifier<List<DownloadEntry>> {
           debugPrint(
               'LastWaveDownload tag skipped ($title — $artist): $e');
         }
+      }
+      if (_prefs.flacOnlyDownloads && finalExt != 'flac') {
+        throw Exception(
+          'FLAC-only is enabled, but Noctune could not produce a native FLAC file from this source.',
+        );
       }
       if (!fromAddon) {
         badge = container == 'webm'
