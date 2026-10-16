@@ -170,10 +170,11 @@ class _LocationRowState extends ConsumerState<_LocationRow> {
           .map((file) {
             final path = file.path!;
             final extension = p.extension(path).replaceFirst('.', '').toLowerCase();
+            final folder = p.basename(p.dirname(path));
             return PlayableTrack(
               title: p.basenameWithoutExtension(path),
-              artist: 'Local file',
-              album: p.basename(p.dirname(path)),
+              artist: folder.isEmpty ? 'Local file' : folder,
+              album: folder,
               playbackUrl: path,
               playbackMimeType: switch (extension) {
                 'flac' => 'audio/flac',
