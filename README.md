@@ -11,7 +11,7 @@ A desktop music player for Windows, Linux, and macOS, with high-quality playback
 <p>
   <a href="https://github.com/Erpt77/LossWave/releases"><img src="https://img.shields.io/github/v/release/Erpt77/LossWave?style=for-the-badge&label=Latest%20release&color=8b83ff" alt="Latest release" /></a>
   <a href="https://github.com/Erpt77/LossWave/actions"><img src="https://img.shields.io/github/actions/workflow/status/Erpt77/LossWave/desktop.yml?branch=main&style=for-the-badge&label=Builds" alt="Build status" /></a>
-  <a href="https://github.com/Erpt77/LossWave/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Erpt77/LossWave?style=for-the-badge" alt="License" /></a>
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-8b83ff?style=for-the-badge" alt="Windows, Linux, and macOS" />
 </p>
 
 [**Downloads**](https://github.com/Erpt77/LossWave/releases) · [Builds & test results](https://github.com/Erpt77/LossWave/actions) · [Report a bug](https://github.com/Erpt77/LossWave/issues)
