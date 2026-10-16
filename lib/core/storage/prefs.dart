@@ -111,6 +111,20 @@ class Prefs {
   Future<void> setFlacOnlyDownloads(bool v) =>
       _sp.setBool('lw_flac_only_downloads', v);
 
+  /// Requested output container. Strict source-format preference, not a transcoder.
+  String get downloadFormat {
+    final value = _sp.getString('noctune_download_format') ?? 'auto';
+    return const ['auto', 'flac', 'mp3', 'm4a', 'opus'].contains(value)
+        ? value
+        : 'auto';
+  }
+
+  Future<void> setDownloadFormat(String value) =>
+      _sp.setString('noctune_download_format',
+          const ['auto', 'flac', 'mp3', 'm4a', 'opus'].contains(value)
+              ? value
+              : 'auto');
+
   static int _clampQuality(int q) => allowedQualities.contains(q) ? q : 27;
 
   Future<void> setPreferLossless(bool v) =>
