@@ -202,8 +202,10 @@ class _WaveAlbumPageState extends ConsumerState<WaveAlbumPage> {
                                         manager.downloadTrack(
                                             title: t.name,
                                             artist: t.artist,
-                                            artworkUrl:
-                                                t.artworkUrl);
+                                            album: title,
+                                            artworkUrl: t.artworkUrl.isNotEmpty
+                                                ? t.artworkUrl
+                                                : art);
                                       }
                                     },
                               overflowItems: order.isEmpty
