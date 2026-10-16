@@ -76,7 +76,7 @@ class DownloadEntry {
 /// fallback, embedded metadata (title/artist/album/lyrics/cover —
 /// `.opus` via WebM remux, FLAC/MP3/M4A tagged in place), `.lrc`
 /// sidecar lyrics, SQLite registry, files under the custom download
-/// folder when set, else `Music/LastWave` (or app documents when
+/// folder when set, else `Music/Noctune` (or app documents when
 /// Music is unavailable).
 class DownloadManager extends StateNotifier<List<DownloadEntry>> {
   final Dio _dio;
@@ -175,7 +175,7 @@ class DownloadManager extends StateNotifier<List<DownloadEntry>> {
     }
     try {
       final music = await getDownloadsDirectory();
-      // Prefer ~/Music/LastWave when available.
+      // Prefer ~/Music/Noctune when available.
       if (music != null) {
         final parent = Directory(music.path).parent;
         final candidates = [
@@ -191,7 +191,7 @@ class DownloadManager extends StateNotifier<List<DownloadEntry>> {
       }
     } catch (_) {}
     final docs = await getApplicationDocumentsDirectory();
-    final dir = Directory(p.join(docs.path, 'LastWave'));
+    final dir = Directory(p.join(docs.path, 'Noctune'));
     await dir.create(recursive: true);
     return dir;
   }
