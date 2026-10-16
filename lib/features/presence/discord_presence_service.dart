@@ -8,7 +8,7 @@ import '../player/playback_service.dart';
 import '../player/player_state.dart';
 import 'discord_ipc.dart';
 
-/// Discord Rich Presence ("Listening to LastWave") over local IPC.
+/// Discord Rich Presence ("Listening to Noctune") over local IPC.
 ///
 /// Setup: create an application at https://discord.com/developers/
 /// applications and paste its ID into [discordApplicationId] below. Under
@@ -137,7 +137,7 @@ class DiscordPresenceService {
       PlayableTrack track, PlayerSnapshot snap, DateTime now) {
     final title = _clip(track.title);
     final artist = track.artist.trim().isEmpty
-        ? (track.album.trim().isEmpty ? 'LastWave' : _clip(track.album))
+        ? (track.album.trim().isEmpty ? 'Noctune' : _clip(track.album))
         : _clip(track.artist);
     Map<String, Object?>? ts;
     if (snap.isPlaying && snap.duration > Duration.zero) {
