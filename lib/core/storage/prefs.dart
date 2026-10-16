@@ -164,7 +164,7 @@ class Prefs {
       _sp.setString('lw_lyrics_animation', v);
 
   // -- Appearance ------------------------------------------------------------
-  bool get amoled => _sp.getBool('lw_amoled') ?? false;
+  bool get amoled => _sp.getBool('lw_amoled') ?? true;
   Future<void> setAmoled(bool v) => _sp.setBool('lw_amoled', v);
 
   /// 'dark' (midnight observatory) or 'light' (pearl white).
