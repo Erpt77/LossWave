@@ -76,7 +76,7 @@ jobs:
       # Icon must stay 512px max and named noctune.png (matches desktop
       # Icon=noctune by basename; linuxdeploy rejects anything else).
       - name: Build AppImage
-        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'pull_request'
         run: |
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VERSION="${GITHUB_REF_NAME#v}"; else VERSION="$(awk '$1 == "version:" {split($2, a, "+"); print a[1]}' pubspec.yaml)"; fi
           echo "Building AppImage for version $VERSION"
@@ -249,14 +249,14 @@ jobs:
       # System packages are release-only (v* tags): PR/push builds
       # stop at the raw bundle above.
       - name: Setup Go (nFPM)
-        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'pull_request'
         uses: actions/setup-go@v6
         with:
           go-version: stable
           cache: false
 
       - name: Build deb/rpm packages
-        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'pull_request'
         run: |
           go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VERSION="${GITHUB_REF_NAME#v}"; else VERSION="$(awk '$1 == "version:" {split($2, a, "+"); print a[1]}' pubspec.yaml)"; fi
@@ -267,7 +267,7 @@ jobs:
           ls -la noctune_${VERSION}_amd64.deb noctune_${VERSION}_x86_64.rpm
 
       - name: Upload Linux Packages
-        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v6
         with:
           name: Noctune-Linux-Packages
@@ -276,7 +276,7 @@ jobs:
             noctune_*_x86_64.rpm
 
       - name: Upload Linux AppImage
-        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v6
         with:
           name: Noctune-Linux-AppImage
@@ -325,7 +325,7 @@ jobs:
       # The single-file installer is release-only (v* tags): PR/push
       # builds stop at the raw Release folder above.
       - name: Build installer
-        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'pull_request'
         shell: pwsh
         run: |
           choco install innosetup --no-progress -y
@@ -334,7 +334,7 @@ jobs:
           Get-ChildItem build\windows\installer\
 
       - name: Upload Windows Installer
-        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v6
         with:
           name: Noctune-Windows-Installer
@@ -344,7 +344,7 @@ jobs:
       # above zipped as-is (lastwave_desktop.exe + bundled DLLs/data),
       # no install step — run in place.
       - name: Build Windows portable zip
-        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'pull_request'
         shell: pwsh
         run: |
           $ver = '${{ github.ref_name }}'.TrimStart('v')
@@ -353,7 +353,7 @@ jobs:
           Get-ChildItem $zip
 
       - name: Upload Windows Portable
-        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v6
         with:
           name: Noctune-Windows-Portable
