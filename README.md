@@ -35,14 +35,15 @@ Noctune is a desktop music player focused on a comfortable listening experience 
 ## Features
 
 - **Desktop playback** — listen to music in a dedicated desktop app.
-- **Personalized Daily Mixes** — music shelves designed to help you revisit favorites and discover tracks based on available listening signals.
+- **Personalized Daily Mixes** — Noctune-generated mixes based on local listening history, liked songs, downloads, and Last.fm signals when connected. These are Spotify-style recommendations, not Spotify's private Daily Mix feed.
 - **YouTube Music integration** — access supported YouTube Music features from the app.
 - **Synced lyrics** — follow lyrics while a track plays when lyric data is available.
-- **Last.fm scrobbling** — connect Last.fm to track listening activity and support music discovery.
+- **Last.fm scrobbling** — connect Last.fm to track listening activity and support music discovery (requires your own Last.fm API key and shared secret).
+- **Local audio playback** — open local audio files, including FLAC, and play them through the desktop player.
 - **Library tools** — manage your music and playback experience in one place.
 - **Cross-platform builds** — packages are prepared for Windows, Linux, and macOS.
 
-> Available features and recommendations can depend on your connected services, configuration, and the metadata available for a track.
+> **Spotify account linking is not implemented yet.** Noctune does not currently connect to Spotify or import Spotify Daily Mixes. Available recommendations depend on local listening signals and configured services. Lossless downloads also require a configured addon/source that actually provides lossless audio.
 
 ## Downloads
 
