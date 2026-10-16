@@ -25,7 +25,7 @@ Future<void> setupWindow() async {
       size: Size(1360, 860),
       minimumSize: Size(1024, 640),
       center: true,
-      title: 'LossWave',
+      title: 'Noctune',
       titleBarStyle: TitleBarStyle.hidden,
       // Neutral graphite — matches WaveColors.background so first frame
       // never flashes navy in either theme.
@@ -72,10 +72,10 @@ Future<void> _setupTray() async {
 
     await trayManager.setIcon(iconPath);
     if (!Platform.isLinux) {
-      await trayManager.setToolTip('LossWave');
+      await trayManager.setToolTip('Noctune');
     }
     await trayManager.setContextMenu(Menu(items: [
-      MenuItem(key: 'show', label: 'Show LossWave'),
+      MenuItem(key: 'show', label: 'Show Noctune'),
       MenuItem.separator(),
       MenuItem(key: 'toggle', label: 'Play / Pause  (Ctrl+Alt+P)'),
       MenuItem(key: 'next', label: 'Next  (Ctrl+Alt+N)'),
