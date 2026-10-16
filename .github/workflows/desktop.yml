@@ -74,7 +74,7 @@ jobs:
       # resolves deps via ldd on this host, so it needs the pristine .so.1
       # linkage (22.04 has no .so.2) to find and bundle libmpv.
       # Icon must stay 512px max and named noctune.png (matches desktop
-      # Icon=lastwave by basename; linuxdeploy rejects anything else).
+      # Icon=noctune by basename; linuxdeploy rejects anything else).
       - name: Build AppImage
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         run: |
