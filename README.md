@@ -38,11 +38,18 @@ Noctune is a desktop music player focused on a comfortable listening experience 
 - **Personalized Daily Mixes** — music shelves designed to help you revisit favorites and discover tracks based on available listening signals.
 - **YouTube Music integration** — access supported YouTube Music features from the app.
 - **Synced lyrics** — follow lyrics while a track plays when lyric data is available.
-- **Last.fm scrobbling** — connect Last.fm to track listening activity and support music discovery.
+- **Last.fm scrobbling** — connect Last.fm to track listening activity and support music discovery. Release builds can use app-provided Last.fm API credentials when the maintainers configure them; otherwise, enter your own credentials in Settings.
+- **Discord Rich Presence** — optionally show the currently playing track in the Discord desktop client through local IPC. No Discord bot or bot token is used.
 - **Library tools** — manage your music and playback experience in one place.
 - **Cross-platform builds** — packages are prepared for Windows, Linux, and macOS.
 
 > Available features and recommendations can depend on your connected services, configuration, and the metadata available for a track.
+
+### Last.fm and Discord setup
+
+Noctune talks to the official Last.fm API; Limusic does not provide a separate Last.fm API or reusable public credentials. Maintainers can configure the GitHub Actions secrets `NOCTUNE_LASTFM_API_KEY` and `NOCTUNE_LASTFM_API_SECRET` for release builds so users do not each need to register an API app. These values are embedded in desktop binaries and are extractable, so only use credentials intended for distribution. If a release does not include them, users can enter their own Last.fm API key and shared secret in Settings.
+
+Discord Rich Presence talks to the running Discord desktop client over its local IPC interface. It does not use a Discord bot, bot token, or Limusic's application identity.
 
 ## Downloads
 
