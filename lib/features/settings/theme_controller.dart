@@ -100,7 +100,6 @@ class ThemeController extends StateNotifier<ThemeState> {
   Future<void> applyCustomTheme(Map<String, dynamic> theme) async {
     final id = theme['id']?.toString() ?? 'custom';
     final accent = (theme['accent'] as num?)?.toInt() ?? 0xFF1DB954;
-    final isLight = theme['isLight'] == true;
     await _prefs.setThemePreset(id);
     await _prefs.setAccentColor(accent);
     // Ignore legacy isLight values on saved palettes.
