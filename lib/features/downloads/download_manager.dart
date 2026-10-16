@@ -332,6 +332,11 @@ class DownloadManager extends StateNotifier<List<DownloadEntry>> {
           badge = stream.qualityBadge;
         }
       }
+      if (stream == null && _prefs.flacOnlyDownloads) {
+        throw Exception(
+          'FLAC-only downloads need a configured lossless source that provides FLAC for this track.',
+        );
+      }
       if (stream == null) {
         final match = await _tube.findBestMatchOrNull(title, artist);
         if (match == null) {
@@ -350,6 +355,19 @@ class DownloadManager extends StateNotifier<List<DownloadEntry>> {
       final audioBytes =
           await _fetchAudioBytes(stream, key, title, artist, badge);
       if (audioBytes.isEmpty) throw Exception('Empty audio payload');
+      if (_prefs.flacOnlyDownloads) {
+        final container = MediaTagger.detectContainer(audioBytes);
+        final isFlac = container == 'flac' ||
+            (container == 'mp4' && MediaTagger.isFlacInMp4(audioBytes));
+        if (!isFlac) {
+          final received = container == 'unknown'
+              ? 'an unsupported audio format'
+              : container.toUpperCase();
+          throw Exception(
+            'FLAC-only is enabled, but the source returned $received instead of FLAC.',
+          );
+        }
+      }
 
       // Lyrics + cover in parallel: sidecar text, embeddable plain
       // text, and cover bytes for the container tag.
