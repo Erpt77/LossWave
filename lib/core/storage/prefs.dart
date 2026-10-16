@@ -84,6 +84,13 @@ class Prefs {
   int get downloadQuality =>
       _clampQuality(_sp.getInt('lw_download_quality') ?? 27);
 
+  /// When enabled, downloads fail rather than silently falling back to
+  /// lossy audio unless the resolved payload is genuinely FLAC.
+  bool get flacOnlyDownloads =>
+      _sp.getBool('lw_flac_only_downloads') ?? false;
+  Future<void> setFlacOnlyDownloads(bool v) =>
+      _sp.setBool('lw_flac_only_downloads', v);
+
   static int _clampQuality(int q) => allowedQualities.contains(q) ? q : 27;
 
   Future<void> setPreferLossless(bool v) =>
