@@ -787,7 +787,7 @@ class _ThemePresetTile extends StatelessWidget {
             Row(children: [
               Container(width: 9, height: 9, decoration: BoxDecoration(color: accent, shape: BoxShape.circle)),
               const SizedBox(width: 5),
-              Text(light ? 'Light' : 'Dark', style: WaveType.caption),
+              Text(light ? 'Light' : 'Dark', style: WaveType.meta),
             ]),
           ],
         ),
@@ -831,7 +831,7 @@ Future<Map<String, dynamic>?> _showCustomThemeDialog(BuildContext context) {
                     decoration: BoxDecoration(
                       color: color,
                       shape: BoxShape.circle,
-                      border: Border.all(color: selected == color ? FluentTheme.of(context).accentColor : Colors.transparent, width: 3),
+                      border: Border.all(color: selected == color ? waveAccent(context) : Colors.transparent, width: 3),
                     ),
                     child: selected == color ? const Icon(FluentIcons.check_mark, size: 14, color: Colors.white) : null,
                   ),
@@ -849,7 +849,7 @@ Future<Map<String, dynamic>?> _showCustomThemeDialog(BuildContext context) {
         ),
         actions: [
           Button(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
-          FilledButton(
+          Button(
             onPressed: () {
               final name = nameController.text.trim();
               if (name.isEmpty) return;
