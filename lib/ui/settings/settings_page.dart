@@ -2101,6 +2101,13 @@ class _Downloads extends ConsumerWidget {
             title: 'Download lyrics',
             subtitle: 'Save synced .lrc sidecars with downloads',
           ),
+          const SizedBox(height: 8),
+          _SwitchRow(
+            value: prefs.flacOnlyDownloads,
+            onChanged: (v) => onUpdate((p) => p.setFlacOnlyDownloads(v)),
+            title: 'Require FLAC downloads',
+            subtitle: 'Never save a lossy fallback; needs a configured source that supplies FLAC',
+          ),
           const SizedBox(height: 12),
           Row(
             children: [
