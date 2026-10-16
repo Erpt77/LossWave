@@ -8,7 +8,7 @@ import '../player/playback_service.dart';
 import '../player/player_state.dart';
 import 'discord_ipc.dart';
 
-/// Discord Rich Presence ("Listening to LastWave") over local IPC.
+/// Discord Rich Presence ("Listening to Noctune") over local IPC.
 ///
 /// Setup: create an application at https://discord.com/developers/
 /// applications and paste its ID into [discordApplicationId] below. Under
@@ -137,7 +137,7 @@ class DiscordPresenceService {
       PlayableTrack track, PlayerSnapshot snap, DateTime now) {
     final title = _clip(track.title);
     final artist = track.artist.trim().isEmpty
-        ? (track.album.trim().isEmpty ? 'LastWave' : _clip(track.album))
+        ? (track.album.trim().isEmpty ? 'Noctune' : _clip(track.album))
         : _clip(track.artist);
     Map<String, Object?>? ts;
     if (snap.isPlaying && snap.duration > Duration.zero) {
@@ -162,11 +162,11 @@ class DiscordPresenceService {
     // Discord buttons are plain URLs — they cannot detect the app. Listen
     // opens the track itself so the clicker can hear it right away; Get
     // always opens the repo.
-    const repoUrl = 'https://github.com/Clash-Projects/LastWave-Desktop';
+    const repoUrl = 'https://github.com/Erpt77/Noctune';
     final vid = track.videoId.trim();
     return {
       'type': 2,
-      'name': 'LastWave',
+      'name': 'Noctune',
       'details': title,
       'state': state,
       'timestamps': ?ts,
@@ -180,12 +180,12 @@ class DiscordPresenceService {
       },
       'buttons': [
         {
-          'label': 'Listen On LastWave',
+          'label': 'Listen on YouTube Music',
           'url': vid.isNotEmpty
               ? 'https://www.youtube.com/watch?v=$vid'
               : '$repoUrl/releases',
         },
-        {'label': 'Get LastWave', 'url': repoUrl},
+        {'label': 'Get Noctune', 'url': repoUrl},
       ],
       'instance': true,
     };
