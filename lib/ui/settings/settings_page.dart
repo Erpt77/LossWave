@@ -2128,7 +2128,10 @@ class _Downloads extends ConsumerWidget {
                 ],
                 onChanged: (v) {
                   if (v != null) {
-                    onUpdate((p) => p.setDownloadFormat(v));
+                    onUpdate((p) async {
+                      await p.setFlacOnlyDownloads(false);
+                      await p.setDownloadFormat(v);
+                    });
                   }
                 },
               ),
