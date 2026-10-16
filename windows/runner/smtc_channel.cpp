@@ -266,8 +266,8 @@ class SmtcChannel::Impl {
     {
       HSTRING appId = nullptr;
       if (SUCCEEDED(WindowsCreateString(
-              kLastWaveAppUserModelId,
-              static_cast<UINT32>(wcslen(kLastWaveAppUserModelId)),
+              kNoctuneAppUserModelId,
+              static_cast<UINT32>(wcslen(kNoctuneAppUserModelId)),
               &appId))) {
         updater->put_AppMediaId(appId);
         WindowsDeleteString(appId);
