@@ -483,9 +483,14 @@ class DownloadManager extends StateNotifier<List<DownloadEntry>> {
               'LastWaveDownload tag skipped ($title — $artist): $e');
         }
       }
-      if (_prefs.flacOnlyDownloads && finalExt != 'flac') {
+      final requestedFormat = _prefs.flacOnlyDownloads
+          ? 'flac'
+          : _prefs.downloadFormat;
+      if (requestedFormat != 'auto' && finalExt != requestedFormat) {
         throw Exception(
-          'FLAC-only is enabled, but Noctune could not produce a native FLAC file from this source.',
+          'Requested ' + requestedFormat.toUpperCase() +
+          ', but this source provided ' + finalExt.toUpperCase() +
+          '. Choose Automatic or another format, or configure a source that supplies the requested format. Noctune does not transcode audio yet.',
         );
       }
       if (!fromAddon) {
