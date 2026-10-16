@@ -2232,12 +2232,15 @@ class _ApiKeysState extends ConsumerState<_ApiKeys> {
     // welcome _AuthPanel — same pattern).
     ref.watch(authRepositoryProvider.select((s) => s.status));
     final prefs = ref.watch(prefsProvider);
-    _key ??= TextEditingController(text: prefs.lastFmApiKey);
-    _secret ??= TextEditingController(text: prefs.lastFmApiSecret);
+    // Never put build-provided credentials into editable text fields.
+    // They are embedded in the binary and should not be displayed.
+    _key ??= TextEditingController(text: prefs.customLastFmApiKey);
+    _secret ??= TextEditingController(text: prefs.customLastFmApiSecret);
     final configured = prefs.isLastFmConfigured;
+    final usingBuiltIn = prefs.hasBuiltInLastFmKeys && !prefs.hasCustomLastFmKeys;
     return _Group(
       title: 'API keys',
-      subtitle: 'Your own keys from last.fm/api/account/create',
+      subtitle: 'Use the app-provided Last.fm setup, or override it with your own keys.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -2253,28 +2256,30 @@ class _ApiKeysState extends ConsumerState<_ApiKeys> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  configured
-                      ? 'Keys saved — values never shown here'
-                      : 'Not configured — Last.fm is disabled',
+                  usingBuiltIn
+                      ? 'App-provided keys active — no setup needed'
+                      : configured
+                          ? 'Custom keys saved — values never shown here'
+                          : 'Not configured — Last.fm is disabled',
                   style: WaveType.meta,
                 ),
               ),
-              if (configured)
+              if (prefs.hasCustomLastFmKeys)
                 Button(
                   onPressed: _busy ? null : _clear,
-                  child: const Text('Clear'),
+                  child: const Text('Clear custom keys'),
                 ),
             ],
           ),
           const SizedBox(height: 10),
-          const Text('API key', style: WaveType.label),
+          const Text('Optional custom API key', style: WaveType.label),
           const SizedBox(height: 4),
           TextBox(
             controller: _key,
             placeholder: '32-character hex key',
           ),
           const SizedBox(height: 8),
-          const Text('Shared secret', style: WaveType.label),
+          const Text('Optional custom shared secret', style: WaveType.label),
           const SizedBox(height: 4),
           TextBox(
             controller: _secret,
@@ -2309,8 +2314,9 @@ class _ApiKeysState extends ConsumerState<_ApiKeys> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Saving different keys signs you out — sessions belong '
-            'to their API key. Reconnect afterwards.',
+            'Leave these blank to use app-provided credentials when the '
+            'release has them. Saving different keys signs you out — '
+            'sessions belong to their API key. Reconnect afterwards.',
             style: WaveType.meta.copyWith(
               color: waveTextTertiary(context),
             ),
