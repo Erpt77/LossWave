@@ -155,7 +155,7 @@ class _LocationRow extends ConsumerStatefulWidget {
 class _LocationRowState extends ConsumerState<_LocationRow> {
   Future<void> _openAudioFiles() async {
     try {
-      final result = await file_picker.FilePicker.platform.pickFiles(
+      final files = await file_picker.FilePicker.pickFiles(
         dialogTitle: 'Open audio files',
         type: file_picker.FileType.custom,
         allowedExtensions: const [
@@ -164,8 +164,8 @@ class _LocationRowState extends ConsumerState<_LocationRow> {
         allowMultiple: true,
         withData: false,
       );
-      if (result == null || result.files.isEmpty || !mounted) return;
-      final tracks = result.files
+      if (files.isEmpty || !mounted) return;
+      final tracks = files
           .where((file) => file.path != null && file.path!.isNotEmpty)
           .map((file) {
             final path = file.path!;
