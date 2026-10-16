@@ -16,7 +16,7 @@ namespace {
 // Window-level AppUserModelID: GetForWindow-based SMTC resolves the
 // flyout label/icon from the HWND's property store first, then falls
 // back to the process ID set in main.cpp. Setting both to the same
-// kLastWaveAppUserModelId keeps taskbar grouping + SMTC in sync.
+// kNoctuneAppUserModelId keeps taskbar grouping + SMTC in sync.
 // Best-effort: any failure degrades to the process-level ID.
 void SetWindowAppUserModelId(HWND hwnd) {
   if (hwnd == nullptr) return;
@@ -27,7 +27,7 @@ void SetWindowAppUserModelId(HWND hwnd) {
   }
   PROPVARIANT pv{};
   if (SUCCEEDED(::InitPropVariantFromString(
-          kLastWaveAppUserModelId, &pv))) {
+          kNoctuneAppUserModelId, &pv))) {
     store->SetValue(PKEY_AppUserModel_ID, pv);
     store->Commit();
     ::PropVariantClear(&pv);

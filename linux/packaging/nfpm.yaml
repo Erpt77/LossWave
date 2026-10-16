@@ -1,42 +1,42 @@
-# LastWave — Linux system packages (deb + rpm) via nFPM.
+# Noctune — Linux system packages (deb + rpm) via nFPM.
 # Built ONLY for releases (v* tags); see .github/workflows/desktop.yml.
 # VERSION comes from the tag (v1.0.0 -> 1.0.0); nFPM expands env vars.
-name: lastwave
+name: noctune
 arch: amd64
 platform: linux
 version: ${VERSION}
-# Transitional shims for the v1.0.0 rename (lastwave-desktop -> lastwave):
+# Transitional shims for the v1.0.0 rename (lastwave-desktop -> noctune):
 # deb maps replaces->Replaces, conflicts->Conflicts; rpm maps
 # replaces->Obsoletes. Lets the new package supersede the old name
-# instead of co-installing under /opt/lastwave twice.
+# instead of co-installing under /opt/noctune twice.
 replaces:
-  - lastwave-desktop
+  - noctune-desktop
 conflicts:
-  - lastwave-desktop
+  - noctune-desktop
 section: sound
 priority: optional
-maintainer: Clash-Projects <https://github.com/Clash-Projects/LastWave-Desktop>
+maintainer: Clash-Projects <https://github.com/Erpt77/Noctune>
 description: |-
-  LastWave — desktop music player: YouTube Music, lossless audio,
+  Noctune — desktop music player: YouTube Music, lossless audio,
   word-synced lyrics and Last.fm scrobbling.
-vendor: Clash-Projects
-homepage: https://github.com/Clash-Projects/LastWave-Desktop
+vendor: Noctune contributors
+homepage: https://github.com/Erpt77/Noctune
 license: Proprietary — all rights reserved (no LICENSE file yet)
 
 contents:
   # Release bundle straight into /opt.
   - src: build/linux/x64/release/bundle
-    dst: /opt/lastwave
+    dst: /opt/noctune
     type: tree
   # CLI entry point.
-  - src: /opt/lastwave/lastwave_desktop
-    dst: /usr/bin/lastwave
+  - src: /opt/noctune/lastwave_desktop
+    dst: /usr/bin/noctune
     type: symlink
   # Desktop integration.
-  - src: linux/packaging/lastwave.desktop
-    dst: /usr/share/applications/lastwave.desktop
-  - src: lastwave-logo.png
-    dst: /usr/share/icons/hicolor/512x512/apps/lastwave.png
+  - src: linux/packaging/noctune.desktop
+    dst: /usr/share/applications/noctune.desktop
+  - src: linux/packaging/noctune.png
+    dst: /usr/share/icons/hicolor/512x512/apps/noctune.png
 
 overrides:
   deb:

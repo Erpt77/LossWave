@@ -57,7 +57,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   // Explicit app identity BEFORE any window exists: taskbar grouping
   // and the SMTC media-flyout source label ("Unknown app" otherwise).
   // Best-effort — the app runs fine without it.
-  ::SetCurrentProcessExplicitAppUserModelID(kLastWaveAppUserModelId);
+  ::SetCurrentProcessExplicitAppUserModelID(kNoctuneAppUserModelId);
 
   ::timeBeginPeriod(1);
 

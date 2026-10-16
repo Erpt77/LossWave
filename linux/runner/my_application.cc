@@ -27,7 +27,7 @@ static void first_frame_cb(MyApplication* self, FlView* view) {
 }
 
 // Re-grab GTK keyboard focus onto the Flutter view whenever the window gains
-// keyboard focus. LastWave routes all keyboard interaction through the Flutter
+// keyboard focus. Noctune routes all keyboard interaction through the Flutter
 // engine: if FlView is not the GTK focus widget, GTK swallows key events at
 // the toplevel (they appear in nothing, not even the engine). This is
 // especially fragile on Wayland, where later window-manager/acrylic calls can

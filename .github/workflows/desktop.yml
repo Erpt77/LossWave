@@ -73,7 +73,7 @@ jobs:
       # ORDER: must run BEFORE `Normalize libmpv linkage` — linuxdeploy
       # resolves deps via ldd on this host, so it needs the pristine .so.1
       # linkage (22.04 has no .so.2) to find and bundle libmpv.
-      # Icon must stay 512px max and named lastwave.png (matches desktop
+      # Icon must stay 512px max and named noctune.png (matches desktop
       # Icon=lastwave by basename; linuxdeploy rejects anything else).
       - name: Build AppImage
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
@@ -102,8 +102,8 @@ jobs:
           ls -la "$KEYBINDER_LIB"
           "$TOOLS/linuxdeploy" --appimage-extract-and-run \
             --appdir AppDir \
-            -d linux/packaging/lastwave-appimage.desktop \
-            -i linux/packaging/lastwave.png \
+            -d linux/packaging/noctune-appimage.desktop \
+            -i linux/packaging/noctune.png \
             --plugin gtk \
             --library "$KEYBINDER_LIB"
           # linuxdeploy should have vendored keybinder via --library
@@ -168,7 +168,7 @@ jobs:
           # libwebkit: the /tmp replacement must fit (NUL-padded when
           # shorter). Fails the job if the string is absent or the
           # replacement is too long, so a broken image never ships.
-          python3 - "AppDir/usr/lib/libwebkit2gtk-4.1.so*" "/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1" "/tmp/.lastwave-webkit/webkit2gtk-4.1" <<'PY'
+          python3 - "AppDir/usr/lib/libwebkit2gtk-4.1.so*" "/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1" "/tmp/.noctune-webkit/webkit2gtk-4.1" <<'PY'
           import glob, os, sys
           lib_pattern, old, new = sys.argv[1], sys.argv[2].encode(), sys.argv[3].encode()
           if len(new) > len(old):
@@ -200,8 +200,8 @@ jobs:
           #!/bin/sh
           HERE="$(dirname "$(readlink -f "$0")")"
           if [ -d "$HERE/usr/lib/webkit2gtk-4.1" ]; then
-            mkdir -p /tmp/.lastwave-webkit
-            ln -snf "$HERE/usr/lib/webkit2gtk-4.1" /tmp/.lastwave-webkit/webkit2gtk-4.1
+            mkdir -p /tmp/.noctune-webkit
+            ln -snf "$HERE/usr/lib/webkit2gtk-4.1" /tmp/.noctune-webkit/webkit2gtk-4.1
             export WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1
           fi
           if [ -d "$HERE/usr/lib/gio/modules" ]; then
@@ -213,8 +213,8 @@ jobs:
           echo "--- AppRun wrapper:"
           cat AppDir/AppRun
           "$TOOLS/appimagetool" --appimage-extract-and-run \
-            AppDir "lastwave_${VERSION}_x86_64.AppImage"
-          ls -la "lastwave_${VERSION}_x86_64.AppImage"
+            AppDir "noctune_${VERSION}_x86_64.AppImage"
+          ls -la "noctune_${VERSION}_x86_64.AppImage"
 
       # Ubuntu 22.04 ships mpv 0.34 whose SONAME is libmpv.so.1, so the
       # source-built media_kit plugins record NEEDED libmpv.so.1 — which
@@ -243,7 +243,7 @@ jobs:
       - name: Upload Linux Artifact
         uses: actions/upload-artifact@v6
         with:
-          name: LossWave-Desktop-Linux
+          name: Noctune-Desktop-Linux
           path: build/linux/x64/release/bundle/
 
       # System packages are release-only (v* tags): PR/push builds
@@ -262,25 +262,25 @@ jobs:
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VERSION="${GITHUB_REF_NAME#v}"; else VERSION="$(awk '$1 == "version:" {split($2, a, "+"); print a[1]}' pubspec.yaml)"; fi
           export VERSION
           echo "Packaging version $VERSION"
-          ~/go/bin/nfpm package --config linux/packaging/nfpm.yaml --packager deb --target ./lastwave_${VERSION}_amd64.deb
-          ~/go/bin/nfpm package --config linux/packaging/nfpm.yaml --packager rpm --target ./lastwave_${VERSION}_x86_64.rpm
-          ls -la lastwave_${VERSION}_amd64.deb lastwave_${VERSION}_x86_64.rpm
+          ~/go/bin/nfpm package --config linux/packaging/nfpm.yaml --packager deb --target ./noctune_${VERSION}_amd64.deb
+          ~/go/bin/nfpm package --config linux/packaging/nfpm.yaml --packager rpm --target ./noctune_${VERSION}_x86_64.rpm
+          ls -la noctune_${VERSION}_amd64.deb noctune_${VERSION}_x86_64.rpm
 
       - name: Upload Linux Packages
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v6
         with:
-          name: LossWave-Linux-Packages
+          name: Noctune-Linux-Packages
           path: |
-            lastwave_*_amd64.deb
-            lastwave_*_x86_64.rpm
+            noctune_*_amd64.deb
+            noctune_*_x86_64.rpm
 
       - name: Upload Linux AppImage
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v6
         with:
-          name: LossWave-Linux-AppImage
-          path: lastwave_*_x86_64.AppImage
+          name: Noctune-Linux-AppImage
+          path: noctune_*_x86_64.AppImage
 
   build-windows:
     name: Build Windows Bundle
@@ -319,7 +319,7 @@ jobs:
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v6
         with:
-          name: LossWave-Desktop-Windows
+          name: Noctune-Desktop-Windows
           path: build\windows\x64\runner\Release\
 
       # The single-file installer is release-only (v* tags): PR/push
@@ -337,8 +337,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v6
         with:
-          name: LossWave-Windows-Installer
-          path: build\windows\installer\lastwave_*.exe
+          name: Noctune-Windows-Installer
+          path: build\windows\installer\noctune_*.exe
 
       # Portable zip is release-only (v* tags): the raw Release folder
       # above zipped as-is (lastwave_desktop.exe + bundled DLLs/data),
@@ -348,7 +348,7 @@ jobs:
         shell: pwsh
         run: |
           $ver = '${{ github.ref_name }}'.TrimStart('v')
-          $zip = "lastwave_${ver}_windows-x86_64-portable.zip"
+          $zip = "noctune_${ver}_windows-x86_64-portable.zip"
           Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath $zip -Force
           Get-ChildItem $zip
 
@@ -356,8 +356,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v6
         with:
-          name: LossWave-Windows-Portable
-          path: lastwave_*_windows-*-portable.zip
+          name: Noctune-Windows-Portable
+          path: noctune_*_windows-*-portable.zip
 
   release:
     name: Publish GitHub Release
@@ -371,41 +371,41 @@ jobs:
       # tag artifact is downloaded by exact name (a missing artifact
       # fails its step loudly instead of publishing an empty release).
       # Assets ride the release as raw files:
-      #   lastwave_<ver>_amd64.deb
-      #   lastwave_<ver>_x86_64.rpm
-      #   lastwave_<ver>_x86_64.AppImage (portable Linux)
-      #   lastwave_<ver>_windows-x86_64-setup.exe (installer)
-      #   lastwave_<ver>_windows-x86_64-portable.zip (portable)
-      #   lastwave_<ver>_macos-arm64.zip (macOS stays a zip — a bare
+      #   noctune_<ver>_amd64.deb
+      #   noctune_<ver>_x86_64.rpm
+      #   noctune_<ver>_x86_64.AppImage (portable Linux)
+      #   noctune_<ver>_windows-x86_64-setup.exe (installer)
+      #   noctune_<ver>_windows-x86_64-portable.zip (portable)
+      #   noctune_<ver>_macos-arm64.zip (macOS stays a zip — a bare
       #     .app bundle isn't shippable).
       - name: Download Windows installer
         uses: actions/download-artifact@v6
         with:
-          name: LossWave-Windows-Installer
+          name: Noctune-Windows-Installer
           path: dist
 
       - name: Download Windows portable
         uses: actions/download-artifact@v6
         with:
-          name: LossWave-Windows-Portable
+          name: Noctune-Windows-Portable
           path: dist
 
       - name: Download Linux packages
         uses: actions/download-artifact@v6
         with:
-          name: LossWave-Linux-Packages
+          name: Noctune-Linux-Packages
           path: dist
 
       - name: Download Linux AppImage
         uses: actions/download-artifact@v6
         with:
-          name: LossWave-Linux-AppImage
+          name: Noctune-Linux-AppImage
           path: dist
 
       - name: Download macOS archive
         uses: actions/download-artifact@v6
         with:
-          name: LossWave-Desktop-macOS
+          name: Noctune-Desktop-macOS
           path: dist
 
       - name: List release files
@@ -449,10 +449,10 @@ jobs:
       - name: Compress macOS Bundle
         run: |
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VERSION="${GITHUB_REF_NAME#v}"; else VERSION="$(awk '$1 == "version:" {split($2, a, "+"); print a[1]}' pubspec.yaml)"; fi
-          ditto -c -k --keepParent "build/macos/Build/Products/Release/lastwave_desktop.app" "lastwave_${VERSION}_macos-arm64.zip"
+          ditto -c -k --keepParent "build/macos/Build/Products/Release/Noctune.app" "Noctune_${VERSION}_macos-arm64.zip"
 
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v6
         with:
-          name: LossWave-Desktop-macOS
-          path: lastwave_*_macos-*.zip
+          name: Noctune-Desktop-macOS
+          path: Noctune_*_macos-*.zip
