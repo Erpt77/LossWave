@@ -175,8 +175,24 @@ class Prefs {
   String get accentMode => _sp.getString('lw_accent_mode') ?? 'manual';
   Future<void> setAccentMode(String v) => _sp.setString('lw_accent_mode', v);
 
-  int get accentColor => _sp.getInt('lw_accent') ?? 0xFFE03030;
+  int get accentColor => _sp.getInt('lw_accent') ?? 0xFF1DB954;
   Future<void> setAccentColor(int v) => _sp.setInt('lw_accent', v);
+
+  String get themePreset => _sp.getString('noctune_theme_preset') ?? 'limusic-green';
+  Future<void> setThemePreset(String v) => _sp.setString('noctune_theme_preset', v);
+
+  List<Map<String, dynamic>> get customThemes {
+    try {
+      final raw = jsonDecode(_sp.getString('noctune_custom_themes') ?? '[]');
+      if (raw is List) {
+        return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      }
+    } catch (_) {}
+    return const [];
+  }
+
+  Future<void> setCustomThemes(List<Map<String, dynamic>> themes) =>
+      _sp.setString('noctune_custom_themes', jsonEncode(themes));
 
   bool get dynamicNowPlaying => _sp.getBool('lw_dynamic_now_playing') ?? false;
   Future<void> setDynamicNowPlaying(bool v) =>
