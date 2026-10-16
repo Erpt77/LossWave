@@ -257,6 +257,38 @@ class WaveHomePage extends ConsumerWidget {
       ));
     }
 
+    // LossWave Daily Mixes are additional shelves, leaving the existing
+    // hero and YouTube Music shelves intact.
+    final dailyMixes =
+        ref.watch(dailyMixesProvider).valueOrNull ?? const <DailyMix>[];
+    for (final dailyMix in dailyMixes) {
+      gap(26);
+      slivers.add(SliverPadding(
+        padding: EdgeInsets.only(left: side, right: side),
+        sliver: SliverToBoxAdapter(
+          child: WaveEntrance(
+            index: slot(),
+            rise: 8,
+            child: _SectionHead(
+              kicker: 'Made for you · ${dailyMix.seedArtist}',
+              title: dailyMix.title,
+              count: dailyMix.tracks.length,
+            ),
+          ),
+        ),
+      ));
+      slivers.add(SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: _CoverShelf(
+            tracks: dailyMix.tracks,
+            source: dailyMix.title,
+            side: side,
+          ),
+        ),
+      ));
+    }
+
     // YouTube Music's own home shelves, straight from the account. The
     // feed above is taste-scored (Last.fm when configured, otherwise
     // YT + on-device signals) - these are the editorial shelves

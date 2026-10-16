@@ -613,21 +613,63 @@ class LyricsRepository {
       if (!newMentions && curMentions) return false;
     }
 
-    // 5. Timed lyrics always beat static text: static lines can never
-    // highlight or follow, no matter how complete. Length/richness
-    // below only compare like with like.
-    if (newRes.isSynced && !current.isSynced) return true;
-    if (!newRes.isSynced && current.isSynced) return false;
-
-    // 6. Complete text beats a shorter cut of the same sync kind
+    // 5. Timed lyrics normally win because they can highlight and follow.
+    // However, a much more complete static transcript should beat a short
+    // timed excerpt (for example, full Apple Music lyrics vs a short LRCLIB cut).
     final newLen = lyricsBodyLength(newRes);
     final curLen = lyricsBodyLength(current);
-    if (newLen >= (curLen * 1.25).round() && newLen - curLen >= 120) {
-      return true;
+    final newMuchLonger =
+        newLen >= (curLen * 1.25).round() && newLen - curLen >= 120;
+    final currentMuchLonger =
+        curLen >= (newLen * 1.25).round() && curLen - newLen >= 120;
+
+    // A long static transcript should replace a short timed excerpt only when
+    // both candidates appear to describe the same song text. Length alone can
+    // otherwise make unrelated lyrics win simply because they have more lines.
+    bool sharesLyricsText(LyricsResult a, LyricsResult b) {
+      String normalize(String value) => value
+          .toLowerCase()
+          .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+          .trim();
+      final aLines = a.lines
+          .map((line) => normalize(line.text))
+          .where((line) => line.length >= 8)
+          .toSet();
+      final bLines = b.lines
+          .map((line) => normalize(line.text))
+          .where((line) => line.length >= 8)
+          .toSet();
+      final smaller = aLines.length <= bLines.length ? aLines : bLines;
+      final larger = identical(smaller, aLines) ? bLines : aLines;
+
+      // A complete transcript often appends extra verses/choruses to a line
+      // that also appears in a shorter timed excerpt. Exact set matching misses
+      // that overlap because the complete line is longer than the excerpt line.
+      final matches = smaller.where((line) {
+        return larger.any(
+          (other) =>
+              line == other || line.startsWith(other) || other.startsWith(line),
+        );
+      }).length;
+      return matches >= 2 ||
+          (smaller.isNotEmpty && matches / smaller.length >= 0.4);
     }
-    if (curLen >= (newLen * 1.25).round() && curLen - newLen >= 120) {
-      return false;
+
+    if (newRes.isSynced != current.isSynced) {
+      if (!newRes.isSynced && newMuchLonger &&
+          sharesLyricsText(newRes, current)) {
+        return true;
+      }
+      if (!current.isSynced && currentMuchLonger &&
+          sharesLyricsText(current, newRes)) {
+        return false;
+      }
+      return newRes.isSynced;
     }
+
+    // 6. Complete text beats a shorter cut when sync quality is equal.
+    if (newMuchLonger) return true;
+    if (currentMuchLonger) return false;
 
     // 7. Unique-line richness beats a padded loop with the same raw count
     final newUnique = lyricsUniqueLineCount(newRes);

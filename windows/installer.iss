@@ -11,9 +11,9 @@
 #ifndef MyAppVersion
   #define MyAppVersion "1.0.0-dev"
 #endif
-#define MyAppName "LastWave"
+#define MyAppName "LossWave"
 #define MyAppPublisher "Clash-Projects"
-#define MyAppURL "https://github.com/Clash-Projects/LastWave-Desktop"
+#define MyAppURL "https://github.com/Erpt77/LossWave"
 #define MyAppExeName "lastwave_desktop.exe"
 #define MyAppId "{{E8B4F6A2-7C3D-4A1E-9F5B-2D6A8C4E1A3B5}"
 ; Must match kLastWaveAppUserModelId in windows/runner/app_identity.h.

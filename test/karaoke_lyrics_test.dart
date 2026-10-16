@@ -465,14 +465,28 @@ void main() {
     test('complete unsynced Apple lyrics beat a shorter timed cut', () {
       final complete = LyricsResult(
         lines: [
-          LyricLine(timeMs: 0, text: 'full chorus ${'na ' * 80}'),
-          LyricLine(timeMs: 0, text: 'full verse ${'la ' * 80}'),
+          LyricLine(
+            timeMs: 0,
+            text: 'the chorus is here and we sing it together ${'na ' * 80}',
+          ),
+          LyricLine(
+            timeMs: 0,
+            text: 'the verse continues with the same song ${'la ' * 80}',
+          ),
         ],
         source: 'Apple Music',
       );
       final truncated = LyricsResult(
         lines: [
-          for (var i = 0; i < 12; i++)
+          LyricLine(
+            timeMs: 0,
+            text: 'the chorus is here and we sing it together',
+          ),
+          LyricLine(
+            timeMs: 1000,
+            text: 'the verse continues with the same song',
+          ),
+          for (var i = 2; i < 12; i++)
             LyricLine(timeMs: i * 1000, text: 'short unique line $i'),
         ],
         isSynced: true,

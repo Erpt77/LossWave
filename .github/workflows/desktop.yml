@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Linux build dependencies
         run: |
@@ -58,10 +58,12 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # - name: Run analyzer & tests
-      #   run: |
-      #     flutter analyze --no-fatal-infos
-      #     flutter test
+      - name: Run analyzer & tests
+        run: |
+          flutter analyze --no-fatal-infos
+          # innertube_live_test.dart explicitly requires live YouTube servers.
+          # All offline tests must pass before desktop packaging proceeds.
+          find test -name '*_test.dart' ! -name 'innertube_live_test.dart' -print0 | xargs -0 flutter test
 
       - name: Build Linux app
         run: flutter build linux --release
@@ -74,9 +76,9 @@ jobs:
       # Icon must stay 512px max and named lastwave.png (matches desktop
       # Icon=lastwave by basename; linuxdeploy rejects anything else).
       - name: Build AppImage
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         run: |
-          export VERSION="${GITHUB_REF_NAME#v}"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VERSION="${GITHUB_REF_NAME#v}"; else VERSION="$(awk '$1 == "version:" {split($2, a, "+"); print a[1]}' pubspec.yaml)"; fi
           echo "Building AppImage for version $VERSION"
           TOOLS="$RUNNER_TEMP/appimage-tools"
           mkdir -p "$TOOLS" AppDir/usr/bin
@@ -239,43 +241,45 @@ jobs:
           fi
 
       - name: Upload Linux Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
-          name: LastWave-Desktop-Linux
+          name: LossWave-Desktop-Linux
           path: build/linux/x64/release/bundle/
 
       # System packages are release-only (v* tags): PR/push builds
       # stop at the raw bundle above.
       - name: Setup Go (nFPM)
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/setup-go@v5
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        uses: actions/setup-go@v6
         with:
           go-version: stable
+          cache: false
 
       - name: Build deb/rpm packages
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         run: |
           go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
-          export VERSION="${GITHUB_REF_NAME#v}"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VERSION="${GITHUB_REF_NAME#v}"; else VERSION="$(awk '$1 == "version:" {split($2, a, "+"); print a[1]}' pubspec.yaml)"; fi
+          export VERSION
           echo "Packaging version $VERSION"
           ~/go/bin/nfpm package --config linux/packaging/nfpm.yaml --packager deb --target ./lastwave_${VERSION}_amd64.deb
           ~/go/bin/nfpm package --config linux/packaging/nfpm.yaml --packager rpm --target ./lastwave_${VERSION}_x86_64.rpm
           ls -la lastwave_${VERSION}_amd64.deb lastwave_${VERSION}_x86_64.rpm
 
       - name: Upload Linux Packages
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/upload-artifact@v4
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v6
         with:
-          name: LastWave-Linux-Packages
+          name: LossWave-Linux-Packages
           path: |
             lastwave_*_amd64.deb
             lastwave_*_x86_64.rpm
 
       - name: Upload Linux AppImage
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/upload-artifact@v4
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v6
         with:
-          name: LastWave-Linux-AppImage
+          name: LossWave-Linux-AppImage
           path: lastwave_*_x86_64.AppImage
 
   build-windows:
@@ -283,7 +287,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -300,38 +304,47 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Run analyzer
+        run: flutter analyze --no-fatal-infos
+
+      # The full test suite contains known failures and has caused the hosted
+      # Windows runner to lose communication. Linux reports test results;
+      # keep Windows focused on validating the native release build.
+      - name: Windows test note
+        run: echo "Skipping full Flutter test suite on Windows; tests run in Linux CI."
+
       - name: Build Windows app
         run: flutter build windows --release
 
       - name: Upload Windows Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
-          name: LastWave-Desktop-Windows
+          name: LossWave-Desktop-Windows
           path: build\windows\x64\runner\Release\
 
       # The single-file installer is release-only (v* tags): PR/push
       # builds stop at the raw Release folder above.
       - name: Build installer
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         shell: pwsh
         run: |
           choco install innosetup --no-progress -y
-          $ver = '${{ github.ref_name }}'.TrimStart('v')
+          $ver = if ('${{ github.ref }}'.StartsWith('refs/tags/v')) { '${{ github.ref_name }}'.TrimStart('v') } else { (Select-String -Path pubspec.yaml -Pattern '^version:').Line.Split(':')[1].Trim().Split('+')[0] }
           & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "/DMyAppVersion=$ver" windows\installer.iss
           Get-ChildItem build\windows\installer\
 
       - name: Upload Windows Installer
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/upload-artifact@v4
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v6
         with:
-          name: LastWave-Windows-Installer
+          name: LossWave-Windows-Installer
           path: build\windows\installer\lastwave_*.exe
 
       # Portable zip is release-only (v* tags): the raw Release folder
       # above zipped as-is (lastwave_desktop.exe + bundled DLLs/data),
       # no install step — run in place.
       - name: Build Windows portable zip
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         shell: pwsh
         run: |
           $ver = '${{ github.ref_name }}'.TrimStart('v')
@@ -340,10 +353,10 @@ jobs:
           Get-ChildItem $zip
 
       - name: Upload Windows Portable
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/upload-artifact@v4
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v6
         with:
-          name: LastWave-Windows-Portable
+          name: LossWave-Windows-Portable
           path: lastwave_*_windows-*-portable.zip
 
   release:
@@ -366,33 +379,33 @@ jobs:
       #   lastwave_<ver>_macos-arm64.zip (macOS stays a zip — a bare
       #     .app bundle isn't shippable).
       - name: Download Windows installer
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
-          name: LastWave-Windows-Installer
+          name: LossWave-Windows-Installer
           path: dist
 
       - name: Download Windows portable
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
-          name: LastWave-Windows-Portable
+          name: LossWave-Windows-Portable
           path: dist
 
       - name: Download Linux packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
-          name: LastWave-Linux-Packages
+          name: LossWave-Linux-Packages
           path: dist
 
       - name: Download Linux AppImage
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
-          name: LastWave-Linux-AppImage
+          name: LossWave-Linux-AppImage
           path: dist
 
       - name: Download macOS archive
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
-          name: LastWave-Desktop-macOS
+          name: LossWave-Desktop-macOS
           path: dist
 
       - name: List release files
@@ -413,7 +426,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -435,11 +448,11 @@ jobs:
 
       - name: Compress macOS Bundle
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VERSION="${GITHUB_REF_NAME#v}"; else VERSION="$(awk '$1 == "version:" {split($2, a, "+"); print a[1]}' pubspec.yaml)"; fi
           ditto -c -k --keepParent "build/macos/Build/Products/Release/lastwave_desktop.app" "lastwave_${VERSION}_macos-arm64.zip"
 
       - name: Upload macOS Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
-          name: LastWave-Desktop-macOS
+          name: LossWave-Desktop-macOS
           path: lastwave_*_macos-*.zip

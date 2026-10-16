@@ -19,7 +19,7 @@ import '../smtc/smtc_service.dart';
 import '../presence/discord_presence_service.dart';
 import 'theme_controller.dart';
 
-/// LastWave desktop application root.
+/// LossWave desktop application root.
 ///
 /// Single primary system: FluentApp router + Wave Fluent theme.
 /// Native window material via flutter_acrylic/window_manager.
@@ -127,7 +127,7 @@ class _LastWaveAppState extends ConsumerState<LastWaveApp> {
       },
       child: WindowLifecycle(
         child: FluentApp.router(
-          title: 'LastWave',
+          title: 'LossWave',
           debugShowCheckedModeBanner: false,
           theme: lightTheme,
           darkTheme: darkTheme,
