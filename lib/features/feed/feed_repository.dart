@@ -1605,7 +1605,7 @@ class FeedRepository {
                   return GeneratedTrack(
                     name: track['name']?.toString() ?? '',
                     artist: artist,
-                    artworkUrl: _bestImage(track['image']),
+                    artworkUrl: '',
                   );
                 })
                 .where((track) =>
