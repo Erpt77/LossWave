@@ -162,11 +162,11 @@ class DiscordPresenceService {
     // Discord buttons are plain URLs — they cannot detect the app. Listen
     // opens the track itself so the clicker can hear it right away; Get
     // always opens the repo.
-    const repoUrl = 'https://github.com/Clash-Projects/LastWave-Desktop';
+    const repoUrl = 'https://github.com/Erpt77/Noctune';
     final vid = track.videoId.trim();
     return {
       'type': 2,
-      'name': 'LastWave',
+      'name': 'Noctune',
       'details': title,
       'state': state,
       'timestamps': ?ts,
@@ -180,12 +180,12 @@ class DiscordPresenceService {
       },
       'buttons': [
         {
-          'label': 'Listen On LastWave',
+          'label': 'Listen on YouTube Music',
           'url': vid.isNotEmpty
               ? 'https://www.youtube.com/watch?v=$vid'
               : '$repoUrl/releases',
         },
-        {'label': 'Get LastWave', 'url': repoUrl},
+        {'label': 'Get Noctune', 'url': repoUrl},
       ],
       'instance': true,
     };

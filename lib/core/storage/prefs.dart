@@ -14,13 +14,33 @@ class Prefs {
   static Future<Prefs> load() async =>
       Prefs(await SharedPreferences.getInstance());
 
-  // -- Last.fm BYOK (bring your own keys) ---------------------------------
-  // No bundled API keys ship with the app: the user enters their own
-  // Last.fm API key + shared secret (from last.fm/api/account/create),
-  // stored here in SharedPreferences. All Last.fm features stay
-  // disabled until both are set.
-  String get lastFmApiKey => _sp.getString('lw_lastfm_api_key') ?? '';
-  String get lastFmApiSecret => _sp.getString('lw_lastfm_api_secret') ?? '';
+  // -- Last.fm credentials ------------------------------------------------
+  // Release maintainers may provide app-level credentials at build time.
+  // These are embedded in the desktop binary and are not a secure secret
+  // store; use only credentials intended for a distributed desktop client.
+  // If no build credentials are provided, users can still enter their own.
+  static const _builtInLastFmApiKey =
+      String.fromEnvironment('NOCTUNE_LASTFM_API_KEY');
+  static const _builtInLastFmApiSecret =
+      String.fromEnvironment('NOCTUNE_LASTFM_API_SECRET');
+
+  String get customLastFmApiKey =>
+      _sp.getString('lw_lastfm_api_key') ?? '';
+  String get customLastFmApiSecret =>
+      _sp.getString('lw_lastfm_api_secret') ?? '';
+  bool get hasCustomLastFmKeys =>
+      customLastFmApiKey.isNotEmpty && customLastFmApiSecret.isNotEmpty;
+  bool get hasBuiltInLastFmKeys =>
+      _builtInLastFmApiKey.isNotEmpty && _builtInLastFmApiSecret.isNotEmpty;
+
+  // Prefer user-provided keys when present, otherwise use build-provided
+  // app credentials. This allows release builds to offer one-click auth
+  // without requiring every user to register a Last.fm API application.
+  String get lastFmApiKey =>
+      customLastFmApiKey.isNotEmpty ? customLastFmApiKey : _builtInLastFmApiKey;
+  String get lastFmApiSecret => customLastFmApiSecret.isNotEmpty
+      ? customLastFmApiSecret
+      : _builtInLastFmApiSecret;
   bool get isLastFmConfigured =>
       lastFmApiKey.isNotEmpty && lastFmApiSecret.isNotEmpty;
 
