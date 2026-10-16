@@ -1,4 +1,4 @@
-import 'package:file_picker/file_picker.dart';
+import 'package:file_picker/file_picker.dart' as file_picker;
 import 'package:path/path.dart' as p;
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -155,9 +155,9 @@ class _LocationRow extends ConsumerStatefulWidget {
 class _LocationRowState extends ConsumerState<_LocationRow> {
   Future<void> _openAudioFiles() async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final result = await file_picker.FilePicker.platform.pickFiles(
         dialogTitle: 'Open audio files',
-        type: FileType.custom,
+        type: file_picker.FileType.custom,
         allowedExtensions: const [
           'flac', 'wav', 'mp3', 'm4a', 'aac', 'ogg', 'opus', 'aiff', 'ape',
         ],
@@ -204,7 +204,7 @@ class _LocationRowState extends ConsumerState<_LocationRow> {
 
   Future<void> _pick() async {
     try {
-      final path = await FilePicker.getDirectoryPath(
+      final path = await file_picker.FilePicker.getDirectoryPath(
         dialogTitle: 'Choose download folder',
       );
       if (path == null || path.trim().isEmpty) return;
