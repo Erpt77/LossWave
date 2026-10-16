@@ -167,6 +167,19 @@ class Prefs {
   bool get amoled => _sp.getBool('lw_amoled') ?? true;
   Future<void> setAmoled(bool v) => _sp.setBool('lw_amoled', v);
 
+  /// Independent shell layout preset: standard | compact | expanded.
+  String get uiLayout {
+    final value = _sp.getString('noctune_ui_layout') ?? 'standard';
+    return const ['standard', 'compact', 'expanded'].contains(value)
+        ? value
+        : 'standard';
+  }
+  Future<void> setUiLayout(String value) =>
+      _sp.setString('noctune_ui_layout',
+          const ['standard', 'compact', 'expanded'].contains(value)
+              ? value
+              : 'standard');
+
   /// 'dark' (midnight observatory) or 'light' (pearl white).
   String get themeMode => _sp.getString('lw_theme_mode') ?? 'dark';
   Future<void> setThemeMode(String v) => _sp.setString('lw_theme_mode', v);

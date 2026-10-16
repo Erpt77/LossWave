@@ -26,6 +26,7 @@ const noctuneThemePresets = <NoctuneThemePreset>[
 class ThemeState {
   final Color accent;
   final bool amoled;
+  final String uiLayout;
   final bool isLight;
   final String hazeMaterial;
   final String hazeIntensity;
@@ -35,6 +36,7 @@ class ThemeState {
   const ThemeState({
     required this.accent,
     required this.amoled,
+    this.uiLayout = 'standard',
     this.isLight = false,
     this.hazeMaterial = 'automatic',
     this.hazeIntensity = 'medium',
@@ -51,6 +53,7 @@ class ThemeController extends StateNotifier<ThemeState> {
   static ThemeState _readState(Prefs prefs) => ThemeState(
         accent: Color(prefs.accentColor),
         amoled: prefs.amoled,
+        uiLayout: prefs.uiLayout,
         isLight: prefs.isLight,
         hazeMaterial: prefs.hazeMaterial,
         hazeIntensity: prefs.hazeIntensity,
@@ -69,7 +72,7 @@ class ThemeController extends StateNotifier<ThemeState> {
   Future<void> applyPreset(NoctuneThemePreset preset) async {
     await _prefs.setThemePreset(preset.id);
     await _prefs.setAccentColor(preset.accent.toARGB32());
-    await _prefs.setThemeMode(preset.isLight ? 'light' : 'dark');
+    // Palette selection is independent of the light/dark color scheme.
     await _prefs.setAccentSource('custom');
     refresh();
   }
@@ -90,7 +93,6 @@ class ThemeController extends StateNotifier<ThemeState> {
     await _prefs.setCustomThemes(themes);
     await _prefs.setThemePreset(entry['id'] as String);
     await _prefs.setAccentColor(accent.toARGB32());
-    await _prefs.setThemeMode(isLight ? 'light' : 'dark');
     await _prefs.setAccentSource('custom');
     refresh();
   }
@@ -101,7 +103,7 @@ class ThemeController extends StateNotifier<ThemeState> {
     final isLight = theme['isLight'] == true;
     await _prefs.setThemePreset(id);
     await _prefs.setAccentColor(accent);
-    await _prefs.setThemeMode(isLight ? 'light' : 'dark');
+    // Ignore legacy isLight values on saved palettes.
     await _prefs.setAccentSource('custom');
     refresh();
   }

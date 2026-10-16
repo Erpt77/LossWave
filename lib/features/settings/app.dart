@@ -108,10 +108,12 @@ class _LastWaveAppState extends ConsumerState<LastWaveApp> {
     final darkTheme = buildWaveFluentTheme(
       accent: theme.accent,
       isLight: false,
+      amoled: theme.amoled,
     );
     final lightTheme = buildWaveFluentTheme(
       accent: theme.accent,
       isLight: true,
+      amoled: theme.amoled,
     );
 
     return WaveHazeScope(

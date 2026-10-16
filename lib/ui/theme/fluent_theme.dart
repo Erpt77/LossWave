@@ -73,6 +73,7 @@ const _waveTooltipTheme = TooltipThemeData(
 FluentThemeData buildWaveFluentTheme({
   required Color accent,
   required bool isLight,
+  bool amoled = true,
 }) {
   final safeAccent =
       accent.a == 0 ? WaveColors.defaultAccent : accent;
@@ -102,9 +103,9 @@ FluentThemeData buildWaveFluentTheme({
   return FluentThemeData(
     brightness: Brightness.dark,
     accentColor: accentColor,
-    scaffoldBackgroundColor: WaveColors.background,
-    micaBackgroundColor: WaveColors.background,
-    acrylicBackgroundColor: WaveColors.panelTranslucent,
+    scaffoldBackgroundColor: amoled ? const Color(0xFF000000) : WaveColors.background,
+    micaBackgroundColor: amoled ? const Color(0xFF000000) : WaveColors.background,
+    acrylicBackgroundColor: amoled ? const Color(0xF2000000) : WaveColors.panelTranslucent,
     cardColor: WaveColors.surface,
     menuColor: WaveColors.surfaceRaised,
     activeColor: WaveColors.textPrimary,

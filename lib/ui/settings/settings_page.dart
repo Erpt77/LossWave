@@ -558,8 +558,8 @@ class _Appearance extends ConsumerWidget {
     return Column(
       children: [
         _Group(
-          title: 'Noctune themes',
-          subtitle: 'Choose a look, or build your own colour theme',
+          title: 'Color palettes',
+          subtitle: 'Change accent colors independently from the app layout and color scheme',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -571,22 +571,22 @@ class _Appearance extends ConsumerWidget {
                     _ThemePresetTile(
                       name: preset.name,
                       accent: preset.accent,
-                      light: preset.isLight,
+                      light: theme.isLight,
                       selected: theme.presetId == preset.id,
                       onTap: () async {
                         await ref.read(themeControllerProvider.notifier).applyPreset(preset);
-                        await applyWindowMaterial(isLight: preset.isLight);
+                        await applyWindowMaterial(isLight: theme.isLight);
                       },
                     ),
                   for (final custom in theme.customThemes)
                     _ThemePresetTile(
                       name: custom['name']?.toString() ?? 'My theme',
                       accent: Color((custom['accent'] as num?)?.toInt() ?? 0xFF1DB954),
-                      light: custom['isLight'] == true,
+                      light: theme.isLight,
                       selected: theme.presetId == custom['id'],
                       onTap: () async {
                         await ref.read(themeControllerProvider.notifier).applyCustomTheme(custom);
-                        await applyWindowMaterial(isLight: custom['isLight'] == true);
+                        await applyWindowMaterial(isLight: theme.isLight);
                       },
                     ),
                 ],
@@ -599,9 +599,9 @@ class _Appearance extends ConsumerWidget {
                   await ref.read(themeControllerProvider.notifier).saveCustomTheme(
                     name: result['name'] as String,
                     accent: Color(result['accent'] as int),
-                    isLight: result['isLight'] as bool,
+                    isLight: theme.isLight,
                   );
-                  await applyWindowMaterial(isLight: result['isLight'] as bool);
+                  await applyWindowMaterial(isLight: theme.isLight);
                 },
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
@@ -664,6 +664,49 @@ class _Appearance extends ConsumerWidget {
                       ),
                     ),
                 ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        _Group(
+          title: 'Color scheme',
+          subtitle: 'Light or dark surfaces are independent of the selected color palette',
+          child: ComboBox<String>(
+            value: theme.isLight ? 'light' : 'dark',
+            items: const [
+              ComboBoxItem(value: 'dark', child: Text('Dark')),
+              ComboBoxItem(value: 'light', child: Text('Light')),
+            ],
+            onChanged: (v) async {
+              if (v == null) return;
+              await ref.read(themeControllerProvider.notifier).setThemeMode(v == 'light');
+              await applyWindowMaterial(isLight: v == 'light');
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+        _Group(
+          title: 'UI layout',
+          subtitle: 'Change navigation layout without changing your colors',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ComboBox<String>(
+                value: theme.uiLayout,
+                items: const [
+                  ComboBoxItem(value: 'standard', child: Text('Standard · responsive navigation')),
+                  ComboBoxItem(value: 'compact', child: Text('Compact · collapse navigation sooner')),
+                  ComboBoxItem(value: 'expanded', child: Text('Expanded · keep navigation open')),
+                ],
+                onChanged: (v) {
+                  if (v != null) onUpdate((p) => p.setUiLayout(v));
+                },
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'This setting only changes the app layout. Any color palette can be used with any layout.',
+                style: WaveType.meta.copyWith(color: waveTextSecondary(context)),
               ),
             ],
           ),
@@ -805,7 +848,6 @@ Future<Map<String, dynamic>?> _showCustomThemeDialog(BuildContext context) {
     Color(0xFFEF8354), Color(0xFF00BFA6), Color(0xFFDA70D6),
   ];
   Color selected = colors.first;
-  bool light = false;
   return showDialog<Map<String, dynamic>>(
     context: context,
     builder: (dialogContext) => StatefulBuilder(
@@ -837,14 +879,6 @@ Future<Map<String, dynamic>?> _showCustomThemeDialog(BuildContext context) {
                   ),
                 ),
             ]),
-            const SizedBox(height: 14),
-            const Text('Base style'),
-            const SizedBox(height: 6),
-            Row(children: [
-              Expanded(child: ToggleButton(checked: !light, onChanged: (_) => setDialogState(() => light = false), child: const Text('Dark'))),
-              const SizedBox(width: 8),
-              Expanded(child: ToggleButton(checked: light, onChanged: (_) => setDialogState(() => light = true), child: const Text('Light'))),
-            ]),
           ],
         ),
         actions: [
@@ -853,7 +887,7 @@ Future<Map<String, dynamic>?> _showCustomThemeDialog(BuildContext context) {
             onPressed: () {
               final name = nameController.text.trim();
               if (name.isEmpty) return;
-              Navigator.of(dialogContext).pop({'name': name, 'accent': selected.toARGB32(), 'isLight': light});
+              Navigator.of(dialogContext).pop({'name': name, 'accent': selected.toARGB32()});
             },
             child: const Text('Save theme'),
           ),
