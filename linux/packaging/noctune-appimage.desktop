@@ -1,5 +1,5 @@
 # Noctune — AppImage desktop entry.
-# Same identity as lastwave.desktop, but Exec is the bare binary name:
+# Same identity as noctune.desktop, but Exec is the bare binary name:
 # inside the AppImage the executable lives at $APPDIR/usr/bin and there
 # is no /opt/lastwave (that absolute path belongs to the deb/rpm layout).
 # Used ONLY by the CI AppImage step; see .github/workflows/desktop.yml.
