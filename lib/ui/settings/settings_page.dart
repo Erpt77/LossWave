@@ -2102,11 +2102,47 @@ class _Downloads extends ConsumerWidget {
             subtitle: 'Save synced .lrc sidecars with downloads',
           ),
           const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Preferred download format', style: WaveType.trackTitle),
+                    Text(
+                      'Automatic keeps the source format. A specific format is strict: the source must provide it; Noctune will not fake or rename audio.',
+                      style: WaveType.meta,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              ComboBox<String>(
+                value: prefs.downloadFormat,
+                items: const [
+                  ComboBoxItem(value: 'auto', child: Text('Automatic')),
+                  ComboBoxItem(value: 'flac', child: Text('FLAC')),
+                  ComboBoxItem(value: 'mp3', child: Text('MP3')),
+                  ComboBoxItem(value: 'm4a', child: Text('M4A / AAC')),
+                  ComboBoxItem(value: 'opus', child: Text('Opus')),
+                ],
+                onChanged: (v) {
+                  if (v != null) {
+                    onUpdate((p) => p.setDownloadFormat(v));
+                  }
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
           _SwitchRow(
-            value: prefs.flacOnlyDownloads,
-            onChanged: (v) => onUpdate((p) => p.setFlacOnlyDownloads(v)),
+            value: prefs.flacOnlyDownloads || prefs.downloadFormat == 'flac',
+            onChanged: (v) => onUpdate((p) async {
+              await p.setFlacOnlyDownloads(v);
+              await p.setDownloadFormat(v ? 'flac' : 'auto');
+            }),
             title: 'Require FLAC downloads',
-            subtitle: 'Never save a lossy fallback; needs a configured source that supplies FLAC',
+            subtitle: 'Never save a lossy fallback; needs a source that supplies FLAC',
           ),
           const SizedBox(height: 12),
           Row(
