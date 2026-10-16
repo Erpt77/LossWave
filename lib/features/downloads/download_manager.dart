@@ -483,6 +483,11 @@ class DownloadManager extends StateNotifier<List<DownloadEntry>> {
               'LastWaveDownload tag skipped ($title — $artist): $e');
         }
       }
+      if (_prefs.flacOnlyDownloads && finalExt != 'flac') {
+        throw Exception(
+          'FLAC-only is enabled, but Noctune could not produce a native FLAC file from this source.',
+        );
+      }
       if (!fromAddon) {
         badge = container == 'webm'
             ? 'OPUS'
