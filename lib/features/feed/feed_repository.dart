@@ -1689,10 +1689,19 @@ class FeedRepository {
                     !isExcluded(track.name, track.artist))
                 .toList();
             final deduped = <String>{};
-            final genreTracks = candidates
+            final genreScored = candidates
                 .where((track) => deduped.add(track.key))
-                .take(tracksPerMix)
+                .map((track) => (
+                      track: track,
+                      score: _affinity(track.artist, affinities) * 24 +
+                          _random.nextDouble() * 5,
+                    ))
                 .toList();
+            final genreTracks = _diversify(
+              genreScored,
+              limit: tracksPerMix,
+              maxPerArtist: 2,
+            );
             if (genreTracks.isEmpty) continue;
             final playable = await resolveVideos(genreTracks,
                 limit: tracksPerMix).timeout(
