@@ -1521,6 +1521,127 @@ class FeedRepository {
         ));
       }
     }
+    // "On Repeat": tracks the listener returns to most often.
+    try {
+      final repeatSeeds = await safeHome(() {
+        final fetch = fetchLfmTop;
+        return fetch != null
+            ? fetch('overall', 30)
+            : _home.fetchTopTracks(period: 'overall', limit: 30);
+      });
+      final repeatTracks = <GeneratedTrack>[];
+      final repeatSeen = <String>{};
+      for (final track in repeatSeeds) {
+        if (isExcluded(track.name, track.artist)) continue;
+        final item = GeneratedTrack(
+          name: track.name,
+          artist: track.artist,
+          artworkUrl: track.artworkUrl,
+        );
+        if (repeatSeen.add(item.key)) repeatTracks.add(item);
+        if (repeatTracks.length >= tracksPerMix) break;
+      }
+      if (repeatTracks.isNotEmpty) {
+        final playable = await resolveVideos(repeatTracks,
+            limit: tracksPerMix).timeout(
+          const Duration(seconds: 35),
+          onTimeout: () => repeatTracks,
+        );
+        if (playable.isNotEmpty) {
+          mixes.add(DailyMix(
+            title: 'On Repeat',
+            seedArtist: 'Your all-time favorites',
+            tracks: playable,
+          ));
+        }
+      }
+    } catch (_) {}
+
+    // Genre-special mixes: discover tags from top artists, then ask
+    // Last.fm for tracks tagged with each genre or mood.
+    if (_apiKey().isNotEmpty) {
+      try {
+        final artistSeeds = [...weekly, ...longTerm]
+            .where((t) => t.artist.trim().isNotEmpty)
+            .take(8);
+        final tags = <String>{};
+        for (final seed in artistSeeds) {
+          try {
+            final json = await _api.get({
+              'method': 'artist.gettoptags',
+              'artist': seed.artist,
+              'api_key': _apiKey(),
+              'autocorrect': '1',
+            }).timeout(const Duration(seconds: 5));
+            final root = json['toptags'] is Map
+                ? Map<String, dynamic>.from(json['toptags'] as Map)
+                : <String, dynamic>{};
+            for (final tag in _asList(root['tag']).take(5)) {
+              final name = tag['name']?.toString().trim() ?? '';
+              if (name.isNotEmpty &&
+                  !const {'seen live', 'favorites', 'favourite', 'my music'}
+                      .contains(name.toLowerCase())) {
+                tags.add(name);
+              }
+              if (tags.length >= 4) break;
+            }
+          } catch (_) {}
+          if (tags.length >= 4) break;
+        }
+
+        for (final tag in tags.take(3)) {
+          try {
+            final json = await _api.get({
+              'method': 'tag.gettoptracks',
+              'tag': tag,
+              'api_key': _apiKey(),
+              'limit': '${tracksPerMix * 2}',
+            }).timeout(const Duration(seconds: 7));
+            final root = json['tracks'] is Map
+                ? Map<String, dynamic>.from(json['tracks'] as Map)
+                : <String, dynamic>{};
+            final candidates = _asList(root['track'])
+                .map((track) {
+                  final artistValue = track['artist'];
+                  final artist = artistValue is Map
+                      ? (artistValue['name']?.toString() ?? '')
+                      : artistValue?.toString() ?? '';
+                  return GeneratedTrack(
+                    name: track['name']?.toString() ?? '',
+                    artist: artist,
+                    artworkUrl: '',
+                  );
+                })
+                .where((track) =>
+                    track.name.isNotEmpty &&
+                    track.artist.isNotEmpty &&
+                    !isExcluded(track.name, track.artist))
+                .toList();
+            final deduped = <String>{};
+            final genreTracks = candidates
+                .where((track) => deduped.add(track.key))
+                .take(tracksPerMix)
+                .toList();
+            if (genreTracks.isEmpty) continue;
+            final playable = await resolveVideos(genreTracks,
+                limit: tracksPerMix).timeout(
+              const Duration(seconds: 35),
+              onTimeout: () => genreTracks,
+            );
+            if (playable.isNotEmpty) {
+              final title =
+                  '${tag[0].toUpperCase()}${tag.substring(1)} Mix';
+              mixes.add(DailyMix(
+                title: title,
+                seedArtist: 'Genre picked for you',
+                tracks: playable,
+              ));
+            }
+          } catch (_) {}
+        }
+      } catch (_) {}
+    }
+
     return mixes;
   }
 }
