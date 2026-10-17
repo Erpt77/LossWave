@@ -33,6 +33,11 @@ final dailyMixesProvider = FutureProvider<List<DailyMix>>((ref) {
   return ref.watch(feedRepositoryProvider).fetchDailyMixes();
 });
 
+/// Weekly personalized mix from YouTube Music's new-release shelf.
+final releaseRadarProvider = FutureProvider<DailyMix?>((ref) {
+  return ref.watch(feedRepositoryProvider).fetchReleaseRadar();
+});
+
 /// One friend's latest scrobble for the Friends Listening strip.
 class FriendActivity {
   final String friend;
