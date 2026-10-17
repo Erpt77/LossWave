@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../core/audio/stream_models.dart';
 import '../core/storage/prefs.dart';
 import '../features/feed/feed_repository.dart';
-import '../features/home/home_providers.dart';
 import '../features/innertube/album_match.dart';
 import '../features/innertube/innertube_api.dart';
 import '../features/player/playback_service.dart';
