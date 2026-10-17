@@ -621,6 +621,124 @@ class FeedRepository {
     }
   }
 
+  /// Personalized weekly new-music mix. The source is YouTube Music's
+  /// dedicated new-releases browse; artist affinity and familiarity filters
+  /// personalize it without inventing release dates that the API doesn't give.
+  Future<DailyMix?> fetchReleaseRadar({int limit = 18}) async {
+    Future<List<HomeTrack>> safeHome(
+      Future<List<HomeTrack>> Function() load,
+    ) async {
+      try {
+        return await load().timeout(const Duration(seconds: 10));
+      } catch (_) {
+        return <HomeTrack>[];
+      }
+    }
+
+    final signals = await Future.wait<List<HomeTrack>>([
+      safeHome(() {
+        final fetch = fetchLfmTop;
+        return fetch != null ? fetch('7day', 30) : _home.fetchTopTracks(period: '7day', limit: 30);
+      }),
+      safeHome(() {
+        final fetch = fetchLfmRecent;
+        return fetch != null ? fetch(30) : _home.fetchRecentTracks(limit: 30);
+      }),
+      safeHome(() {
+        final fetch = fetchLfmTop;
+        return fetch != null ? fetch('12month', 30) : _home.fetchTopTracks(period: '12month', limit: 30);
+      }),
+    ]);
+    final weekly = signals[0];
+    final recent = signals[1];
+    final longTerm = signals[2];
+
+    LocalTaste local = const LocalTaste();
+    try {
+      local = await (fetchLocalTaste?.call() ?? Future.value(null))
+              .timeout(const Duration(seconds: 5)) ?? const LocalTaste();
+    } catch (_) {}
+
+    List<YouTubeMusicTrack> liked = const [];
+    List<YouTubeMusicTrack> history = const [];
+    try {
+      liked = await (fetchYtLiked?.call() ?? Future.value(const <YouTubeMusicTrack>[]))
+          .timeout(const Duration(seconds: 6));
+    } catch (_) {}
+    try {
+      history = await (fetchYtHistory?.call() ?? Future.value(const <YouTubeMusicTrack>[]))
+          .timeout(const Duration(seconds: 6));
+    } catch (_) {}
+
+    List<YouTubeMusicEntity> albums;
+    try {
+      albums = await fetchNewReleaseAlbums(limit: 60).timeout(const Duration(seconds: 12));
+    } catch (_) {
+      return null;
+    }
+    if (albums.isEmpty) return null;
+
+    final affinities = await _artistAffinities(
+      weekly, recent, longTerm: longTerm, ytLiked: liked, ytHistory: history,
+      localLiked: local.likedTracks, localPlays: local.recentPlays,
+      localDownloads: local.downloadedTracks,
+      lfmActive: weekly.isNotEmpty || recent.isNotEmpty,
+    );
+    final known = <String>{
+      for (final t in [...recent, ...weekly, ...longTerm, ...local.seedPool(limit: 60)])
+        '${t.name.toLowerCase().trim()}|${t.artist.toLowerCase().trim()}',
+      for (final t in [...liked, ...history])
+        '${t.title.toLowerCase().trim()}|${t.artist.toLowerCase().trim()}',
+    };
+    final excluded = _db?.loadExclusionKeys() ?? const <String>{};
+    final weekSeed = feedDaySeed(DateTime.now()) ~/ 7;
+    final ranked = albums.where((a) =>
+        a.kind == YouTubeEntityKind.album && a.browseId.isNotEmpty).toList()
+      ..sort((a, b) {
+        final scoreA = _affinity(a.artist, affinities) * 100 + Random(weekSeed ^ a.name.hashCode).nextDouble();
+        final scoreB = _affinity(b.artist, affinities) * 100 + Random(weekSeed ^ b.name.hashCode).nextDouble();
+        return scoreB.compareTo(scoreA);
+      });
+
+    final candidates = <GeneratedTrack>[];
+    final seen = <String>{};
+    for (final album in ranked.take(12)) {
+      List<GeneratedTrack> tracks;
+      try {
+        tracks = await albumTracks(album).timeout(const Duration(seconds: 8));
+      } catch (_) {
+        continue;
+      }
+      for (final track in tracks) {
+        final key = '${track.name.toLowerCase().trim()}|${track.artist.toLowerCase().trim()}';
+        if (track.name.trim().isEmpty || track.artist.trim().isEmpty ||
+            known.contains(key) ||
+            excluded.contains(AppDatabase.exclusionKey(track.name, track.artist)) ||
+            !seen.add(key)) continue;
+        candidates.add(track);
+      }
+      if (candidates.length >= limit * 2) break;
+    }
+    if (candidates.isEmpty) return null;
+
+    final scored = candidates.map((track) => (
+      track: track,
+      score: _affinity(track.artist, affinities) * 30 +
+          Random(weekSeed ^ track.key.hashCode).nextDouble() * 3,
+    )).toList();
+    final picked = _diversify(scored, limit: limit, maxPerArtist: 2);
+    List<GeneratedTrack> playable;
+    try {
+      playable = await resolveVideos(picked, limit: limit)
+          .timeout(const Duration(seconds: 30), onTimeout: () => picked);
+    } catch (_) {
+      playable = picked;
+    }
+    if (playable.isEmpty) return null;
+    return DailyMix(title: 'Release Radar',
+        seedArtist: 'New releases matched to your taste', tracks: playable);
+  }
+
   Future<FeedData> loadFeed({bool chartsOnly = false}) async {
     try {
       Future<List<YouTubeMusicTrack>> cappedYt(

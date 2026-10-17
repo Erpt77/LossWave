@@ -289,6 +289,37 @@ class WaveHomePage extends ConsumerWidget {
       ));
     }
 
+    // Release Radar uses YouTube Music's real new-release browse and ranks
+    // artists by the listener's taste signals.
+    final releaseRadar = ref.watch(releaseRadarProvider).valueOrNull;
+    if (releaseRadar != null && releaseRadar.tracks.isNotEmpty) {
+      gap(26);
+      slivers.add(SliverPadding(
+        padding: EdgeInsets.only(left: side, right: side),
+        sliver: SliverToBoxAdapter(
+          child: WaveEntrance(
+            index: slot(),
+            rise: 8,
+            child: _SectionHead(
+              kicker: 'Made for you · ${releaseRadar.seedArtist}',
+              title: releaseRadar.title,
+              count: releaseRadar.tracks.length,
+            ),
+          ),
+        ),
+      ));
+      slivers.add(SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: _CoverShelf(
+            tracks: releaseRadar.tracks,
+            source: releaseRadar.title,
+            side: side,
+          ),
+        ),
+      ));
+    }
+
     // YouTube Music's own home shelves, straight from the account. The
     // feed above is taste-scored (Last.fm when configured, otherwise
     // YT + on-device signals) - these are the editorial shelves
