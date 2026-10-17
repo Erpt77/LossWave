@@ -1573,7 +1573,9 @@ class FeedRepository {
               'api_key': _apiKey(),
               'autocorrect': '1',
             }).timeout(const Duration(seconds: 5));
-            final root = _asMap(json['toptags']);
+            final root = json['toptags'] is Map
+                ? Map<String, dynamic>.from(json['toptags'] as Map)
+                : <String, dynamic>{};
             for (final tag in _asList(root['tag']).take(5)) {
               final name = tag['name']?.toString().trim() ?? '';
               if (name.isNotEmpty &&
@@ -1595,7 +1597,9 @@ class FeedRepository {
               'api_key': _apiKey(),
               'limit': '${tracksPerMix * 2}',
             }).timeout(const Duration(seconds: 7));
-            final root = _asMap(json['tracks']);
+            final root = json['tracks'] is Map
+                ? Map<String, dynamic>.from(json['tracks'] as Map)
+                : <String, dynamic>{};
             final candidates = _asList(root['track'])
                 .map((track) {
                   final artistValue = track['artist'];
