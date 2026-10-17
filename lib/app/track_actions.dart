@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../core/audio/stream_models.dart';
 import '../core/storage/prefs.dart';
 import '../features/feed/feed_repository.dart';
+import '../features/home/home_providers.dart';
 import '../features/innertube/album_match.dart';
 import '../features/innertube/innertube_api.dart';
 import '../features/player/playback_service.dart';
@@ -32,6 +33,33 @@ Future<void> playGenerated(
     // Autoplay similar once the queue runs out (Settings → Playback).
     // Every list surface funnels through here, so one flag covers
     // Quick Picks, Liked, History, albums and playlists.
+    endlessRadio: ref.read(prefsProvider).autoplaySimilar,
+  );
+}
+
+/// Play a song-centered "More Like This" queue.
+Future<void> playMoreLikeThis(
+  WidgetRef ref,
+  BuildContext context, {
+  required String title,
+  required String artist,
+}) async {
+  final messenger = ScaffoldMessenger.maybeOf(context);
+  final tracks = await ref.read(feedRepositoryProvider).fetchMoreLikeThis(
+    title, artist, limit: 20,
+  );
+  if (!context.mounted) return;
+  if (tracks.isEmpty) {
+    messenger?.showSnackBar(const SnackBar(
+      content: Text('Could not find similar tracks for this song.'),
+    ));
+    return;
+  }
+  final player = ref.read(playbackServiceProvider.notifier);
+  await player.playQueue(
+    tracks.map(playableFromGenerated).toList(),
+    0,
+    sourceLabel: 'More Like This · $title',
     endlessRadio: ref.read(prefsProvider).autoplaySimilar,
   );
 }
