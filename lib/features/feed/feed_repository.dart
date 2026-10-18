@@ -415,6 +415,47 @@ class FeedRepository {
     return affinities;
   }
 
+  /// Build a playable, deduplicated queue of tracks similar to a chosen song.
+  /// Uses the same YouTube Music radio + optional Last.fm source as the mixes.
+  Future<List<GeneratedTrack>> fetchMoreLikeThis(
+    String name,
+    String artist, {
+    int limit = 20,
+  }) async {
+    List<GeneratedTrack> candidates;
+    try {
+      final fetch = fetchSimilar;
+      candidates = await (fetch != null
+          ? fetch(name, artist, limit * 2)
+          : _similarTracks(name, artist, limit: limit * 2))
+          .timeout(const Duration(seconds: 14), onTimeout: () => <GeneratedTrack>[]);
+    } catch (_) {
+      candidates = <GeneratedTrack>[];
+    }
+    final seedKey = '${name.toLowerCase().trim()}|${artist.toLowerCase().trim()}';
+    final seen = <String>{seedKey};
+    final unique = candidates.where((t) =>
+      t.name.trim().isNotEmpty &&
+      t.artist.trim().isNotEmpty &&
+      seen.add('${t.name.toLowerCase().trim()}|${t.artist.toLowerCase().trim()}')
+    ).toList();
+    final excluded = _db?.loadExclusionKeys() ?? const <String>{};
+    final eligible = unique.where((t) =>
+      !excluded.contains(AppDatabase.exclusionKey(t.name, t.artist))
+    ).toList();
+    if (eligible.isEmpty) return const <GeneratedTrack>[];
+    final scored = eligible.map((t) => (
+      track: t,
+      score: (t.match.isEmpty ? 0 : double.tryParse(t.match) ?? 0) +
+          _random.nextDouble() * 3,
+    )).toList();
+    final picked = _diversify(scored, limit: limit, maxPerArtist: 2);
+    return resolveVideos(picked, limit: limit).timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => picked,
+    );
+  }
+
   Future<List<GeneratedTrack>> _similarTracks(
     String name,
     String artist, {

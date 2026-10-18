@@ -189,6 +189,19 @@ List<WaveMenuEntry> waveTrackMenuItems({
       ),
     );
   }
+  items.add(
+    WaveMenuAction(
+      leading: const Icon(FluentIcons.music_note, size: 15),
+      label: 'More Like This',
+      hint: 'Build a similar-song queue',
+      onPressed: () => playMoreLikeThis(
+        ref,
+        ref.context,
+        title: title,
+        artist: artist,
+      ),
+    ),
+  );
   items.add(const WaveMenuSeparator());
   items.add(
     WaveMenuAction(

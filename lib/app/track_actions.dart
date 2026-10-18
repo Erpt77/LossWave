@@ -36,6 +36,33 @@ Future<void> playGenerated(
   );
 }
 
+/// Play a song-centered "More Like This" queue.
+Future<void> playMoreLikeThis(
+  WidgetRef ref,
+  BuildContext context, {
+  required String title,
+  required String artist,
+}) async {
+  final messenger = ScaffoldMessenger.maybeOf(context);
+  final tracks = await ref.read(feedRepositoryProvider).fetchMoreLikeThis(
+    title, artist, limit: 20,
+  );
+  if (!context.mounted) return;
+  if (tracks.isEmpty) {
+    messenger?.showSnackBar(const SnackBar(
+      content: Text('Could not find similar tracks for this song.'),
+    ));
+    return;
+  }
+  final player = ref.read(playbackServiceProvider.notifier);
+  await player.playQueue(
+    tracks.map(playableFromGenerated).toList(),
+    0,
+    sourceLabel: 'More Like This · $title',
+    endlessRadio: ref.read(prefsProvider).autoplaySimilar,
+  );
+}
+
 /// Merge YouTube Music account tracks into a local queue, deduped by
 /// videoId then name|artist. Local entries keep their order; YT extras
 /// append. Used by Liked Songs surfaces when signed in.
